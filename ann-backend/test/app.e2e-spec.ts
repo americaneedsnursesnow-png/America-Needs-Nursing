@@ -20,7 +20,7 @@ describe('AppController (e2e)', () => {
     return request(app.getHttpServer())
       .get('/')
       .expect(200)
-      .expect('ANN server is ready');
+      .expect('ANN BACKEND IS READY');
   });
 
   afterEach(async () => {

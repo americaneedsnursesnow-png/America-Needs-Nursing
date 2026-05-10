@@ -24,8 +24,8 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "ANN server is ready"', () => {
-      expect(appController.getHello()).toBe('ANN server is ready');
+    it('should return "ANN BACKEND IS READY"', () => {
+      expect(appController.getHello()).toBe('ANN BACKEND IS READY');
     });
   });
 });
