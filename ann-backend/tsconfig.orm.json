@@ -5,5 +5,5 @@
     "moduleResolution": "node",
     "noEmit": true
   },
-  "include": ["data-source.ts", "src/database/**/*.ts"]
+  "include": ["src/database/**/*.ts"]
 }

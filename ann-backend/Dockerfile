@@ -27,4 +27,4 @@ RUN chmod +x /docker-entrypoint.sh && mkdir -p /app/uploads && chown -R node:nod
 EXPOSE 3000
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["node", "dist/src/main.js"]
+CMD ["node", "dist/main.js"]

@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { config } from 'dotenv';
 import { DataSource } from 'typeorm';
-import { typeOrmEntities } from './src/database/entities/entities.registry';
+import { typeOrmEntities } from './entities/entities.registry';
 
 config();
 

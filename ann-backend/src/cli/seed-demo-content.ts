@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import * as bcrypt from 'bcrypt';
-import dataSource from '../../data-source';
+import dataSource from '../database/data-source';
 import {
   BlogPost,
   BlogPostStatus,
