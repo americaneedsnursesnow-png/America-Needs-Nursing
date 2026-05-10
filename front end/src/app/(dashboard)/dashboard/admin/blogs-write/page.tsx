@@ -1,0 +1,621 @@
+"use client";
+
+import React, { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import {
+  Plus,
+  Search,
+  Edit3,
+  ChevronLeft,
+  Send,
+  Loader2,
+  Image as ImageIcon,
+  Upload,
+  X,
+} from "lucide-react";
+
+import { RichTextEditor } from "@/components/rich-text-editor/rich-text-editor.lazy";
+import { useAuth } from "@/contexts/auth-context";
+import { blogCoverSrc } from "@/lib/blog-cover-image";
+import {
+  createBlogPost,
+  listAdminBlogPosts,
+  updateBlogPost,
+  uploadBlogPostImage,
+  type AdminBlogPost,
+  type BlogPostStatus,
+} from "@/lib/api/blog-admin-api";
+import { BackendRequestError } from "@/lib/api/authed-client";
+import { canAccessBlogNewsletterAdmin } from "@/lib/api/auth-api";
+import {
+  isRichTextEffectivelyEmpty,
+  sanitizeBlogRichHtml,
+} from "@/lib/sanitize-job-html";
+
+type EditorForm = {
+  id: string | null;
+  title: string;
+  slug: string;
+  body: string;
+  coverImageUrl: string;
+  excerpt: string;
+  status: BlogPostStatus;
+  sponsored: boolean;
+};
+
+const emptyForm = (): EditorForm => ({
+  id: null,
+  title: "",
+  slug: "",
+  body: "",
+  coverImageUrl: "",
+  excerpt: "",
+  status: "draft",
+  sponsored: false,
+});
+
+function formatListDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+export default function AdminBlogSystem() {
+  const { accessToken, ready, user } = useAuth();
+  const [view, setView] = useState<"list" | "edit">("list");
+  const [posts, setPosts] = useState<AdminBlogPost[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [formData, setFormData] = useState<EditorForm>(emptyForm);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
+  /** Remount rich editor when starting a fresh post (no id). */
+  const [newBodyEditorKey, setNewBodyEditorKey] = useState(0);
+
+  const titleRef = useRef<HTMLTextAreaElement>(null);
+  const coverFileRef = useRef<HTMLInputElement>(null);
+
+  const adjustHeight = (ref: RefObject<HTMLTextAreaElement | null>) => {
+    if (ref.current) {
+      ref.current.style.height = "auto";
+      ref.current.style.height = `${ref.current.scrollHeight}px`;
+    }
+  };
+
+  const loadPosts = useCallback(async () => {
+    if (!accessToken) return;
+    setListLoading(true);
+    setListError(null);
+    try {
+      const list = await listAdminBlogPosts(accessToken);
+      setPosts(list);
+    } catch (e) {
+      setListError(
+        e instanceof BackendRequestError
+          ? e.message
+          : e instanceof Error
+            ? e.message
+            : "Could not load posts.",
+      );
+    } finally {
+      setListLoading(false);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (!ready || !accessToken || !user || !canAccessBlogNewsletterAdmin(user.role))
+      return;
+    void loadPosts();
+  }, [ready, accessToken, user, loadPosts]);
+
+  useEffect(() => {
+    if (view === "edit") {
+      adjustHeight(titleRef);
+    }
+  }, [view, formData.title]);
+
+  const handleCreateNew = () => {
+    setNewBodyEditorKey((k) => k + 1);
+    setFormData(emptyForm());
+    setSaveError(null);
+    setView("edit");
+  };
+
+  const handleEdit = (post: AdminBlogPost) => {
+    setFormData({
+      id: post.id,
+      title: post.title,
+      slug: post.slug,
+      body: post.body,
+      coverImageUrl: post.coverImageUrl ?? "",
+      excerpt: post.excerpt ?? "",
+      status: post.status,
+      sponsored: post.sponsored,
+    });
+    setSaveError(null);
+    setView("edit");
+  };
+
+  const handleSave = async () => {
+    if (!accessToken) return;
+    setSaveError(null);
+    if (!formData.title.trim() || isRichTextEffectivelyEmpty(formData.body)) {
+      setSaveError("Title and body are required.");
+      return;
+    }
+    const bodyHtml = sanitizeBlogRichHtml(formData.body.trim());
+    setSaving(true);
+    try {
+      if (formData.id) {
+        await updateBlogPost(accessToken, formData.id, {
+          title: formData.title.trim(),
+          body: bodyHtml,
+          coverImageUrl: formData.coverImageUrl.trim() || null,
+          excerpt: formData.excerpt.trim() || null,
+          sponsored: formData.sponsored,
+          status: formData.status,
+        });
+      } else {
+        const createBody = {
+          title: formData.title.trim(),
+          body: bodyHtml,
+          excerpt: formData.excerpt.trim() || undefined,
+          sponsored: formData.sponsored,
+          status: formData.status,
+          ...(formData.coverImageUrl.trim()
+            ? { coverImageUrl: formData.coverImageUrl.trim() }
+            : {}),
+        };
+        await createBlogPost(accessToken, createBody);
+      }
+      await loadPosts();
+      setView("list");
+      setFormData(emptyForm());
+    } catch (e) {
+      setSaveError(
+        e instanceof BackendRequestError
+          ? e.message
+          : e instanceof Error
+            ? e.message
+            : "Save failed.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBodyImageUpload = useCallback(
+    async (file: File) => {
+      if (!accessToken) {
+        throw new Error("Not signed in");
+      }
+      const { url } = await uploadBlogPostImage(accessToken, file);
+      return url.startsWith("/") ? url : `/${url}`;
+    },
+    [accessToken],
+  );
+
+  async function handleCoverFile(file: File | null) {
+    if (!file || !accessToken) return;
+    setSaveError(null);
+    setCoverUploading(true);
+    try {
+      const { url } = await uploadBlogPostImage(accessToken, file);
+      setFormData((f) => ({ ...f, coverImageUrl: url }));
+    } catch (e) {
+      setSaveError(
+        e instanceof BackendRequestError
+          ? e.message
+          : e instanceof Error
+            ? e.message
+            : "Image upload failed.",
+      );
+    } finally {
+      setCoverUploading(false);
+      if (coverFileRef.current) coverFileRef.current.value = "";
+    }
+  }
+
+  const filtered = posts.filter((p) =>
+    `${p.title} ${p.slug}`.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  if (!ready || !user) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center text-slate-500">
+        <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
+      </div>
+    );
+  }
+
+  return (
+    <div className="box-border min-h-screen w-full bg-[#FDFDFD] font-sans text-slate-900">
+      {view === "list" ? (
+        <div className="box-border w-full animate-in px-4 py-8 fade-in duration-700 sm:px-6 sm:py-12">
+          <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-center">
+            <div>
+             <h1 className="text-2x lsm:text-3xl lg:text-4xl font-black tracking-tight ">
+              Content Studio
+            </h1>
+              <p className="mt-2 text-lg text-slate-500">
+                Create and publish posts. Cover photos upload to the server (JPEG,
+                PNG, or WebP, up to 5 MB).
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleCreateNew}
+              className="flex items-center gap-3 rounded-2xl bg-red-600 px-6 py-3 font-bold text-white transition-all hover:bg-red-700 active:scale-95"
+            >
+              <Plus size={22} /> New post
+            </button>
+          </div>
+
+          {listError ? (
+            <p
+              className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900"
+              role="alert"
+            >
+              {listError}
+            </p>
+          ) : null}
+
+          <div className="overflow-hidden rounded-[32px] border border-slate-100 bg-white shadow-sm">
+            <div className="border-b border-slate-50 p-8">
+              <div className="relative max-w-md">
+                <Search
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={20}
+                />
+                <input
+                  type="search"
+                  placeholder="Filter by title or slug…"
+                  className="w-full rounded-2xl bg-slate-50 py-4 pl-12 pr-4 outline-none transition-all focus:ring-2 focus:ring-red-600/10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              {listLoading ? (
+                <div className="flex justify-center py-16 text-slate-500">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : (
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50/50">
+                    <tr className="text-[12px] font-bold uppercase tracking-[0.15em] text-slate-400">
+                      <th className="w-16 px-4 py-5 pl-10">Cover</th>
+                      <th className="px-10 py-5">Article</th>
+                      <th className="px-10 py-5">Slug</th>
+                      <th className="px-10 py-5">Status</th>
+                      <th className="px-10 py-5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {filtered.map((post) => (
+                      <tr
+                        key={post.id}
+                        className="group transition-colors hover:bg-slate-50/50"
+                      >
+                        <td className="px-4 py-8 pl-10 align-middle">
+                          {blogCoverSrc(post.coverImageUrl) ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={blogCoverSrc(post.coverImageUrl) ?? ""}
+                              alt=""
+                              className="h-12 w-12 rounded-xl border border-slate-100 object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-300">
+                              <ImageIcon size={20} />
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-10 py-8">
+                          <span className="block text-lg font-bold text-slate-800 transition-colors group-hover:text-red-600">
+                            {post.title}
+                          </span>
+                          <span className="mt-1 block text-sm font-medium text-slate-400">
+                            {formatListDate(post.updatedAt)}
+                          </span>
+                        </td>
+                        <td className="px-10 py-8 font-mono text-sm text-slate-600">
+                          {post.slug}
+                        </td>
+                        <td className="px-10 py-8">
+                          <span
+                            className={`rounded-lg px-3 py-1.5 text-[11px] font-black uppercase tracking-wider ${
+                              post.status === "published"
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-slate-100 text-slate-600"
+                            }`}
+                          >
+                            {post.status}
+                          </span>
+                        </td>
+                        <td className="px-10 py-8 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(post)}
+                            className="rounded-xl p-3 text-slate-400 transition-all hover:bg-red-50 hover:text-red-600"
+                            aria-label="Edit post"
+                          >
+                            <Edit3 size={20} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            {!listLoading && filtered.length === 0 && !listError ? (
+              <p className="py-12 text-center text-slate-500">No posts yet.</p>
+            ) : null}
+          </div>
+        </div>
+      ) : (
+        <div className="animate-in fade-in duration-500">
+          <div className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 px-6 py-4 backdrop-blur-xl">
+            <div className="box-border flex w-full items-center justify-between px-4 sm:px-6">
+              <div className="flex items-center gap-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView("list");
+                    setSaveError(null);
+                  }}
+                  className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <div className="h-6 w-px bg-slate-200" />
+                <span className="text-sm font-bold uppercase tracking-widest text-slate-400">
+                  {formData.id ? "Edit post" : "New post"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleSave()}
+                disabled={saving}
+                className="flex items-center gap-2 rounded-xl bg-red-600 px-8 py-3 font-bold text-white shadow-lg shadow-red-100 transition-all hover:bg-red-700 active:scale-95 disabled:opacity-60"
+              >
+                {saving ? (
+                  <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                ) : (
+                  <Send size={18} />
+                )}
+                Save
+              </button>
+            </div>
+          </div>
+
+          <main className="box-border w-full px-4 py-8 sm:px-6 sm:py-12">
+            {saveError ? (
+              <p
+                className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+                role="alert"
+              >
+                {saveError}
+              </p>
+            ) : null}
+            <div className="flex flex-col gap-12 lg:flex-row">
+              <div className="flex-1 space-y-10">
+                <div className="space-y-4">
+                  <label
+                    htmlFor="article-title"
+                    className="block text-sm font-bold uppercase tracking-wider text-slate-500"
+                  >
+                    Title
+                  </label>
+                  <textarea
+                    id="article-title"
+                    ref={titleRef}
+                    placeholder="Post title…"
+                    className="w-full resize-none overflow-hidden bg-transparent text-3xl font-black leading-[1.1] text-slate-800 outline-none placeholder:text-gray-200 md:text-4xl"
+                    rows={1}
+                    value={formData.title}
+                    onChange={(e) => {
+                      setFormData({ ...formData, title: e.target.value });
+                      adjustHeight(titleRef);
+                    }}
+                  />
+                  {!formData.id ? (
+                    <p className="text-xs text-slate-400">
+                      A unique post URL is generated automatically when you save (you can
+                      reuse the same title anytime).
+                    </p>
+                  ) : null}
+                </div>
+
+                {formData.id ? (
+                  <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
+                    <span className="block text-[11px] font-black uppercase tracking-wider text-slate-400">
+                      Public URL
+                    </span>
+                    <code className="break-all text-sm text-slate-700">
+                      /blog/{formData.slug}
+                    </code>
+                    <p className="text-xs text-slate-400">
+                      The slug is fixed after publish so existing links keep working.
+                    </p>
+                  </div>
+                ) : null}
+
+                <div className="space-y-4">
+                  <label className="block text-sm font-bold uppercase tracking-wider text-slate-500">
+                    Body
+                  </label>
+                  <p className="text-xs text-slate-400">
+                    Formatting toolbar: bold, lists, headings, quotes, images
+                    (JPEG/PNG/WebP, 5 MB), undo/redo. Inline images upload to the
+                    server and appear in the public post.
+                  </p>
+                  <RichTextEditor
+                    key={formData.id ?? `new-${newBodyEditorKey}`}
+                    value={formData.body}
+                    onChange={(html) =>
+                      setFormData((f) => ({ ...f, body: html }))
+                    }
+                    placeholder="Write the article…"
+                    aria-label="Blog post body"
+                    contentMinClass="min-h-[28rem] md:min-h-[32rem]"
+                    disabled={!accessToken}
+                    bodyImageUpload={
+                      accessToken ? handleBodyImageUpload : undefined
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="w-full lg:w-[380px]">
+                <div className="sticky top-32 space-y-8 rounded-[32px] border border-slate-100 bg-white p-8 shadow-sm">
+                  <h2 className="border-b border-slate-50 pb-4 text-xs font-black uppercase tracking-widest text-slate-400">
+                    Publishing
+                  </h2>
+
+                  <div className="space-y-3">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                      Cover image
+                    </span>
+                    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+                      {blogCoverSrc(formData.coverImageUrl) ? (
+                        <div className="relative aspect-video w-full">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={blogCoverSrc(formData.coverImageUrl) ?? ""}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFormData((f) => ({ ...f, coverImageUrl: "" }))
+                            }
+                            className="absolute right-2 top-2 rounded-lg bg-black/60 p-2 text-white transition-colors hover:bg-black/80"
+                            aria-label="Remove cover image"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex aspect-video flex-col items-center justify-center gap-2 text-slate-400">
+                          <ImageIcon size={32} />
+                          <span className="text-xs font-medium">No cover yet</span>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      ref={coverFileRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/jpg"
+                      className="hidden"
+                      onChange={(e) =>
+                        void handleCoverFile(e.target.files?.[0] ?? null)
+                      }
+                    />
+                    <button
+                      type="button"
+                      disabled={coverUploading || !accessToken}
+                      onClick={() => coverFileRef.current?.click()}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      {coverUploading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload size={16} />
+                      )}
+                      {coverUploading ? "Uploading…" : "Upload photo"}
+                    </button>
+                    <div className="space-y-1">
+                      <label
+                        htmlFor="cover-url-manual"
+                        className="text-[10px] font-bold uppercase tracking-wider text-slate-400"
+                      >
+                        Or paste image URL
+                      </label>
+                      <input
+                        id="cover-url-manual"
+                        type="text"
+                        placeholder="/files/… or https://…"
+                        className="w-full rounded-xl border border-transparent bg-slate-50 px-4 py-2.5 text-xs outline-none focus:border-red-100"
+                        value={formData.coverImageUrl}
+                        onChange={(e) =>
+                          setFormData((f) => ({
+                            ...f,
+                            coverImageUrl: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label
+                      htmlFor="post-status"
+                      className="text-[11px] font-black uppercase tracking-wider text-slate-400"
+                    >
+                      Status
+                    </label>
+                    <select
+                      id="post-status"
+                      className="w-full cursor-pointer rounded-xl border border-transparent bg-slate-50 px-5 py-3 font-bold outline-none transition-all focus:border-red-100"
+                      value={formData.status}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          status: e.target.value as BlogPostStatus,
+                        })
+                      }
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="published">Published</option>
+                    </select>
+                  </div>
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={formData.sponsored}
+                      onChange={(e) =>
+                        setFormData({ ...formData, sponsored: e.target.checked })
+                      }
+                      className="h-4 w-4 rounded border-slate-300"
+                    />
+                    <span className="text-sm font-bold text-slate-700">
+                      Sponsored
+                    </span>
+                  </label>
+                  <div className="space-y-3">
+                    <label
+                      htmlFor="post-excerpt"
+                      className="text-[11px] font-black uppercase tracking-wider text-slate-400"
+                    >
+                      Excerpt (optional)
+                    </label>
+                    <textarea
+                      id="post-excerpt"
+                      rows={4}
+                      className="w-full rounded-xl border border-transparent bg-slate-50 px-5 py-3 text-sm outline-none focus:border-red-100"
+                      value={formData.excerpt}
+                      onChange={(e) =>
+                        setFormData({ ...formData, excerpt: e.target.value })
+                      }
+                      placeholder="Short summary for listings…"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      )}
+    </div>
+  );
+}

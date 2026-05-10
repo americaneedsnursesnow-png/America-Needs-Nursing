@@ -1,0 +1,208 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --surface: #f8fafc;
+  --color-primary: #2563eb;
+  --color-primary-dark: #1d4ed8;
+  --color-button: #dc2626;
+  --color-button-dark: #b91c1c;
+  --ring: rgba(220, 38, 38, 0.35);
+}
+
+::selection {
+  background-color: rgba(220, 38, 38, 0.12);
+  color: var(--foreground);
+}
+section {
+  position: relative;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+
+/* Covers rubber-band / overscroll; some browsers paint html behind body */
+html {
+  background-color: var(--background);
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  text-rendering: optimizeLegibility;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-button);
+  outline-offset: 2px;
+}
+
+
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background: #0f172a;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transform: translateY(-200%);
+  transition: transform 0.2s ease;
+}
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* TipTap / job posting rich text */
+.submit-job-rich-editor-content .ProseMirror {
+  min-height: inherit;
+  padding: 0.75rem 1rem;
+  outline: none;
+  color: #111827;
+}
+.submit-job-rich-editor-content .ProseMirror p {
+  margin: 0.35rem 0;
+}
+.submit-job-rich-editor-content .ProseMirror p:first-child {
+  margin-top: 0;
+}
+.submit-job-rich-editor-content .ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+.submit-job-rich-editor-content .ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin: 0.5rem 0;
+}
+.submit-job-rich-editor-content .ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.25rem;
+  margin: 0.5rem 0;
+}
+.submit-job-rich-editor-content .ProseMirror li {
+  margin: 0.15rem 0;
+}
+.submit-job-rich-editor-content .ProseMirror h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0.75rem 0 0.35rem;
+  color: #111827;
+}
+.submit-job-rich-editor-content .ProseMirror h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0.65rem 0 0.25rem;
+  color: #111827;
+}
+.submit-job-rich-editor-content .ProseMirror blockquote {
+  border-left: 3px solid #d1d5db;
+  padding-left: 0.75rem;
+  margin: 0.5rem 0;
+  color: #4b5563;
+}
+.submit-job-rich-editor-content .ProseMirror p.is-editor-empty::before {
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: #9ca3af;
+  content: attr(data-placeholder);
+}
+
+.job-rich-html p {
+  margin: 0.35rem 0;
+}
+.job-rich-html ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin: 0.5rem 0;
+}
+.job-rich-html ol {
+  list-style-type: decimal;
+  padding-left: 1.25rem;
+  margin: 0.5rem 0;
+}
+.job-rich-html li {
+  margin: 0.15rem 0;
+}
+.job-rich-html h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0.75rem 0 0.35rem;
+}
+.job-rich-html h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0.65rem 0 0.25rem;
+}
+.job-rich-html blockquote {
+  border-left: 3px solid #d1d5db;
+  padding-left: 0.75rem;
+  margin: 0.5rem 0;
+  color: #4b5563;
+}
+.job-rich-html pre {
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  background: #f3f4f6;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  margin: 0.5rem 0;
+}
+.job-rich-html code {
+  font-size: 0.875em;
+}
+.job-rich-html img.blog-inline-image,
+.job-rich-html img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  display: block;
+}
+
+.submit-job-rich-editor-content .ProseMirror img.blog-inline-image,
+.submit-job-rich-editor-content .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+@layer components {
+  /** Solid brand CTA — use on <button> or <a class="btn"> */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg bg-button px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200;
+    @apply hover:bg-button-dark active:scale-[0.99];
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-button focus-visible:ring-offset-2 focus-visible:ring-offset-white;
+  }
+  .form-input {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm transition-all duration-200;
+    @apply placeholder:text-slate-400;
+    @apply focus:border-red-500/80 focus:outline-none focus:ring-2 focus:ring-red-500/20;
+    @apply disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400;
+  }
+  .input-label {
+    @apply mb-1.5 ml-0.5 block select-none text-sm font-medium text-slate-600;
+  }
+  /** Outline — secondary actions */
+  .btn-outline-primary {
+    @apply inline-flex items-center justify-center rounded-lg border-2 border-button px-5 py-2.5 text-sm font-semibold text-button transition-colors duration-200;
+    @apply hover:bg-red-50 active:scale-[0.99];
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-button focus-visible:ring-offset-2 focus-visible:ring-offset-white;
+  }
+}

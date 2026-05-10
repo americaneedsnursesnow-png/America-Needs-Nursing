@@ -1,0 +1,46 @@
+{
+  "name": "ann-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "clean": "node scripts/clean-next.cjs",
+    "prebuild": "node scripts/clean-next.cjs",
+    "dev": "next dev --turbopack -p 3003",
+    "build": "next build",
+    "start": "next start -p 3003",
+    "lint": "next lint",
+    "check:public-pagination": "node scripts/check-public-pagination.mjs"
+  },
+  "dependencies": {
+    "@stripe/stripe-js": "^5.10.0",
+    "@tanstack/react-query": "^5.100.9",
+    "@tiptap/extension-image": "^3.22.3",
+    "@tiptap/extension-placeholder": "^3.22.3",
+    "@tiptap/react": "^3.22.3",
+    "@tiptap/starter-kit": "^3.22.3",
+    "@types/leaflet": "^1.9.21",
+    "framer-motion": "^12.38.0",
+    "isomorphic-dompurify": "^3.8.0",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.7.0",
+    "next": "^15.1.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-easy-crop": "^5.5.7",
+    "react-leaflet": "^5.0.0",
+    "recharts": "^3.8.1",
+    "socket.io-client": "^4.8.3",
+    "sweetalert2": "^11.26.24"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@types/node": "^22.13.1",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "eslint": "^9.19.0",
+    "eslint-config-next": "^15.1.6",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3"
+  }
+}
