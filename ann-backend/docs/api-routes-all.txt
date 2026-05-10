@@ -1,0 +1,158 @@
+ANN Backend — API routes (no global prefix; base URL = http://localhost:<PORT>)
+
+================================================================================
+ROOT (AppController)
+================================================================================
+GET    /                          — hello / root
+GET    /health/db                 — DB health check
+
+================================================================================
+AUTH
+================================================================================
+POST   /auth/register             — body: clientName, email, password, role (nurse | employer only)
+POST   /auth/login                — body: clientName, email, password; returns JWT
+
+================================================================================
+USERS (JWT + role: super_admin)
+================================================================================
+POST   /users                     — body: CreateUserDto (clientName, email, role, optional password)
+
+================================================================================
+PUBLIC (no auth)
+================================================================================
+GET    /public/companies          — query: clientName (default: ann)
+GET    /public/companies/:slug    — query: clientName; returns { company, jobs }
+GET    /public/jobs               — query: clientName
+GET    /public/jobs/:slug         — query: clientName
+GET    /public/blog/posts         — query: clientName
+GET    /public/blog/posts/:slug   — query: clientName
+
+================================================================================
+NEWSLETTER
+================================================================================
+POST   /newsletter/subscribe      — body: clientName, email (public)
+GET    /newsletter/unsubscribe    — query: token (public)
+POST   /newsletter/track          — body: subscriberId, eventType, optional url (public)
+
+POST   /newsletter/admin/broadcast — JWT super_admin; body: subject, html
+        Queues bulk BCC to all users with role nurse | employer for JWT clientName.
+        Register + POST /users also add email to newsletter_subscribers (idempotent).
+        Blog publish emails go to active newsletter_subscribers for that client.
+
+================================================================================
+COMMUNITY
+================================================================================
+WebSocket namespace /community-chat (Socket.IO, same host/port as API)
+  Connect: pass JWT as socket.io auth: { token: "<jwt>" } OR query ?token= OR Authorization Bearer on handshake.
+  Roles: nurse (with profile) or super_admin only. Joins room community:<clientName> from token.
+  Client → Server:  chat:send   body: { body: string }  (1–2000 chars)
+  Server → Client:  chat:joined { room, clientName }
+  Server → Client:  chat:message { id, clientName, senderUserId, senderEmail, senderRole, body, createdAt }
+  Ack (chat:send):   { ok: true, message } | { ok: false, error }
+
+GET    /community/chat/history             — JWT + nurse OR super_admin; query: limit (default 50, max 200)
+
+GET    /community/posts                    — query: clientName (default ann); public read (forum-style)
+GET    /community/posts/:id                — query: clientName
+GET    /community/posts/:id/comments       — query: clientName
+POST   /community/posts                    — JWT + nurse OR super_admin
+POST   /community/posts/:id/comments       — JWT + nurse OR super_admin
+
+================================================================================
+COMPANIES (JWT; employer or super_admin as noted)
+================================================================================
+POST   /companies                          — JWT + employer — create company profile
+GET    /companies/me                       — JWT + employer
+PATCH  /companies/me                       — JWT + employer
+GET    /companies/admin/pending            — JWT + super_admin
+PATCH  /companies/admin/:id/approval       — JWT + super_admin
+PATCH  /companies/admin/:id/partnership    — JWT + super_admin
+PATCH  /companies/admin/:id/subscription   — JWT + super_admin
+
+================================================================================
+JOBS (JWT; employer or super_admin as noted)
+================================================================================
+POST   /jobs                               — JWT + employer — create draft job
+GET    /jobs/mine                          — JWT + employer
+GET    /jobs/mine/:id                      — JWT + employer
+PATCH  /jobs/mine/:id                      — JWT + employer
+PATCH  /jobs/admin/:id/approve-listing     — JWT + super_admin
+
+================================================================================
+APPLICATIONS (JWT)
+================================================================================
+POST   /applications/jobs/:jobId           — JWT + nurse — apply to published job
+GET    /applications/mine                  — JWT + nurse
+GET    /applications/jobs/:jobId           — JWT + employer — list applications for job
+PATCH  /applications/:id/status            — JWT + employer — update application status
+
+================================================================================
+MESSAGING (JWT + nurse or employer; thread tied to job application) — WebSocket only
+================================================================================
+WebSocket namespace /job-messaging (Socket.IO, same host/port as API)
+  Connect: pass JWT as socket.io auth: { token: "<jwt>" } OR query ?token= OR Authorization Bearer on handshake.
+  Roles: nurse | employer only.
+
+  Client → Server:
+    threads:list       body: {}  (any JSON object is fine)
+      ack: { ok: true, threads: [{ applicationId, lastMessageAt: ISO string | null }] } | { ok: false, error }
+
+    thread:messages    body: { applicationId: uuid }
+      ack: { ok: true, messages: JobThreadMessagePayload[] } | { ok: false, error }
+      (same visibility as before: e.g. nurse sees messages only after employer’s first message; employer only when application is reviewed/accepted.)
+
+    thread:send        body: { applicationId: uuid, body: string }
+      ack: { ok: true, message: JobThreadMessagePayload } | { ok: false, error }
+
+    thread:join        body: { applicationId: uuid }  — join room for live pushes
+    thread:leave       body: { applicationId: uuid }
+
+  Server → Client (room members after thread:send):
+    thread:message     { id, conversationId, senderUserId, body, readAt, createdAt }
+
+  JobThreadMessagePayload: id, conversationId, senderUserId, body, readAt (ISO|null), createdAt (ISO)
+
+================================================================================
+ENGAGEMENT — routes at root (JWT + nurse)
+================================================================================
+POST   /saved-jobs/:jobId
+DELETE /saved-jobs/:jobId
+GET    /saved-jobs
+POST   /company-follows/:companyId
+DELETE /company-follows/:companyId
+GET    /company-follows
+
+================================================================================
+NURSE PROFILES (JWT)
+================================================================================
+GET    /nurse-profiles/me                  — JWT + nurse
+PATCH  /nurse-profiles/me                  — JWT + nurse
+POST   /nurse-profiles/me/resume           — JWT + nurse; multipart "file" (PDF ≤5MB); saves under uploads/nurse-resumes/<slug>/
+GET    /files/*                            — static files from UPLOADS_DIR (resume PDFs)
+
+================================================================================
+NOTIFICATIONS (JWT)
+================================================================================
+GET    /notifications
+PATCH  /notifications/:id/read
+
+================================================================================
+BLOG (JWT + super_admin for write; public reads via /public/blog/...)
+When a post is published (create or update), nurses for the same clientName are notified by email if SMTP_* is configured.
+================================================================================
+POST   /blog/posts
+GET    /blog/posts                         — list all (admin)
+PATCH  /blog/posts/:id
+
+================================================================================
+ADMIN NURSE DATABASE (JWT + super_admin)
+================================================================================
+POST   /admin/nurse-database/import        — body: bulk records
+GET    /admin/nurse-database/records       — query: take, skip
+
+================================================================================
+Notes
+================================================================================
+- Protected routes: Authorization: Bearer <JWT> unless noted public.
+- Multi-tenant field clientName is on the user at login/register; many queries use ?clientName= for public endpoints (default often "ann").
+- Role values: nurse | employer | super_admin

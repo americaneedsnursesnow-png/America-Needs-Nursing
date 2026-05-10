@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
+# Uploaded nurse resumes (local dev)
+uploads/
+
+# Environment
+.env
+.env.local
+
+# Logs / coverage
+logs/
+*.log
+npm-debug.log*
+coverage/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

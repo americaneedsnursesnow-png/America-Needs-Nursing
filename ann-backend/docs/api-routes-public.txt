@@ -1,0 +1,32 @@
+ANN Backend — Public / unauthenticated API routes
+
+GET    /
+GET    /health/db
+
+GET    /public/companies?clientName=&page=1&limit=20
+       → { items: Company[], meta: { page, limit, totalItems, totalPages, hasNextPage, hasPreviousPage } }
+
+GET    /public/companies/featured?clientName=&page=1&limit=10   (limit max 50)
+
+GET    /public/companies/:slug?clientName=&jobPage=1&jobLimit=20
+       → { company, jobs: Job[], jobsMeta: { ...pagination } }
+
+GET    /public/jobs?clientName=&page=1&limit=20
+       → { items: Job[], meta: { ... } }
+
+GET    /public/jobs/:slug?clientName=
+GET    /public/blog/posts?clientName=&page=1&limit=20
+       → { items: BlogPost[], meta: { ... } }
+
+GET    /public/blog/posts/:slug?clientName=
+
+POST   /newsletter/subscribe
+GET    /newsletter/unsubscribe?token=
+POST   /newsletter/track
+
+GET    /community/posts?clientName=
+GET    /community/posts/:id?clientName=
+GET    /community/posts/:id/comments?clientName=
+
+POST   /auth/register
+POST   /auth/login

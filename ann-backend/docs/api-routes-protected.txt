@@ -1,0 +1,62 @@
+ANN Backend — JWT-protected API routes (header: Authorization: Bearer <token>)
+
+Unless noted, guards are AuthGuard('jwt') + RolesGuard with the role(s) shown.
+
+--- super_admin only ---
+POST   /users
+
+GET    /companies/admin/pending
+PATCH  /companies/admin/:id/approval
+PATCH  /companies/admin/:id/partnership
+PATCH  /companies/admin/:id/subscription
+
+PATCH  /jobs/admin/:id/approve-listing
+
+POST   /blog/posts
+GET    /blog/posts
+PATCH  /blog/posts/:id
+
+POST   /admin/nurse-database/import
+GET    /admin/nurse-database/records?take=&skip=
+
+--- employer ---
+POST   /companies
+GET    /companies/me
+PATCH  /companies/me
+
+POST   /jobs
+GET    /jobs/mine
+GET    /jobs/mine/:id
+PATCH  /jobs/mine/:id
+
+GET    /applications/jobs/:jobId
+PATCH  /applications/:id/status
+
+--- nurse ---
+POST   /applications/jobs/:jobId
+GET    /applications/mine
+
+POST   /saved-jobs/:jobId
+DELETE /saved-jobs/:jobId
+GET    /saved-jobs
+POST   /company-follows/:companyId
+DELETE /company-follows/:companyId
+GET    /company-follows
+
+GET    /nurse-profiles/me
+PATCH  /nurse-profiles/me
+POST   /nurse-profiles/me/resume          — multipart field "file" (PDF, max 5MB); sets resume_url
+
+--- any authenticated role (JWT) ---
+GET    /notifications
+PATCH  /notifications/:id/read
+
+--- nurse OR employer ---
+(Job application messaging is WebSocket-only: namespace /job-messaging — see api-routes-all.txt)
+
+--- nurse OR super_admin (community) ---
+GET    /community/chat/history?limit=
+POST   /community/posts
+POST   /community/posts/:id/comments
+
+(WebSocket /community-chat — see api-routes-all.txt)
