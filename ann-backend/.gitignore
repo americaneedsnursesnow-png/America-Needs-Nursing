@@ -9,7 +9,6 @@ uploads/
 
 # Environment
 .env
-.env.local
 
 # Logs / coverage
 logs/
