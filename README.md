@@ -1,48 +1,73 @@
-<div align="center">
-
 # America Needs Nursing
 
-**Monorepo:** Next.js (`front-end`) · NestJS (`ann-backend`)
-
-<br/>
-
-</div>
+Monorepo for the **America Needs Nursing** platform: a **Next.js** web app and **NestJS** API with PostgreSQL, Redis, TypeORM, background jobs (BullMQ), Stripe, and real-time chat (Socket.IO).
 
 ## Contents
 
-- [Overview](#overview)
+- [Packages](#packages)
+- [Prerequisites](#prerequisites)
 - [Local development](#local-development)
-- [Deploy on a VPS](#deploy-on-a-vps)
+- [Deployment](#deployment)
+- [Further reading](#further-reading)
 
-## Overview
+## Packages
 
-- **Frontend** — `front-end/` — Next.js (App Router)
-- **Backend** — `ann-backend/` — NestJS, PostgreSQL, Redis
+- **Frontend** — [`front-end/`](front-end/) — Next.js 15 (App Router), Tailwind; npm package `ann-frontend`.
+- **Backend** — [`ann-backend/`](ann-backend/) — NestJS 11 API; npm package `ann-backend`.
+
+## Prerequisites
+
+- **Node.js** — use a current LTS (project Dockerfiles use Node 22).
+- **npm** — install dependencies in each package directory.
+- **Docker** — optional but recommended for local PostgreSQL, Redis, and pgAdmin via Compose.
 
 ## Local development
 
-PostgreSQL and Redis for local work are defined in **`ann-backend/docker-compose.yml`**.
+### 1. Database and Redis (Docker)
 
-## Deploy on a VPS
-
-Run these steps **on the server** over SSH (this environment cannot reach your VPS).
-
-1. **DNS** — Create **A** (or **CNAME**) records for the app host (e.g. `www.example.com`) and API host (e.g. `api.example.com`) pointing at the VPS **public IP**.
-
-2. **Firewall** — Allow SSH, HTTP, and HTTPS. Example with `ufw`: allow OpenSSH, then `80/tcp` and `443/tcp`, then enable `ufw`.
-
-3. **Docker** — Install Docker Engine and the Compose plugin. On **Ubuntu**, run as root: `sudo bash deploy/install-docker-ubuntu.sh`, then add your user to the `docker` group and **log out and back in**: `sudo usermod -aG docker "$USER"`. Other distros: [Docker install docs](https://docs.docker.com/engine/install/).
-
-4. **Code** — Clone this repo on the VPS and `cd` into it (SSH deploy key or HTTPS).
-
-5. **Configure** — Run `chmod +x deploy/vps-deploy.sh` then `./deploy/vps-deploy.sh`. The first run creates `deploy.env` from `deploy.env.example` and exits so you can edit secrets and domains. Run `./deploy/vps-deploy.sh` again to build and start.
-
-6. **HTTPS** — The compose file exposes port **80** only. Add TLS with Cloudflare, Caddy, certbot in front of Nginx, or certificate volumes on the `nginx` service.
-
-**Manual compose** (same as the script), from repo root:
+From `ann-backend/`:
 
 ```bash
-docker compose --env-file deploy.env up -d --build
+cd ann-backend
+cp .env.example .env
+# Set DATABASE_PASSWORD and align DATABASE_* with docker-compose (default Postgres port mapping is 5433→5432).
+docker compose up -d
 ```
 
-Optional: set `ANN_DEPLOY_ENV_FILE` to use a different env file path with `vps-deploy.sh`.
+Compose starts **PostgreSQL** (host port **5433**), **Redis** (**6379**), and **pgAdmin** (**5050**). See [`ann-backend/docker-compose.yml`](ann-backend/docker-compose.yml) and comments in [`.env.example`](ann-backend/.env.example).
+
+### 2. Backend API
+
+```bash
+cd ann-backend
+npm install
+npm run migration:run   # when you need schema updates (see TypeORM scripts in package.json)
+npm run start:dev       # default http://localhost:3000
+```
+
+Configure JWT, database, Redis, email, Stripe, and other settings in `ann-backend/.env` (start from `.env.example`).
+
+### 3. Frontend
+
+```bash
+cd front-end
+cp .env.local.example .env.local
+# Point API_UPSTREAM_URL and NEXT_PUBLIC_NEST_SOCKET_ORIGIN at your Nest URL/port.
+npm install
+npm run dev             # http://localhost:3003
+```
+
+The browser calls the API via the Next **`/api/nest`** proxy; Socket.IO uses `NEXT_PUBLIC_NEST_SOCKET_ORIGIN`. Details: [`front-end/README.md`](front-end/README.md).
+
+## Deployment
+
+Pushes to **`main`** trigger [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml): an SSH job connects to the server, runs `git pull`, `npm install`, and `npm run build` in `ann-backend/` and `front-end/`, then **`pm2 reload ann-backend`** for the API.
+
+Required GitHub **secrets**: `SERVER_HOST`, `SERVER_USER`, `SSH_PRIVATE_KEY`. The workflow assumes the repo lives on the server at **`/var/www/America-Needs-Nursing`** (adjust the workflow if your path differs).
+
+**Docker:** production-oriented images are defined in [`ann-backend/Dockerfile`](ann-backend/Dockerfile) and [`front-end/Dockerfile`](front-end/Dockerfile) for alternative or manual container deploys.
+
+## Further reading
+
+- [Frontend README](front-end/README.md) — env vars, scripts, layout.
+- [Backend README](ann-backend/README.md) — Nest CLI commands and tests (starter template; run commands from `ann-backend/`).
