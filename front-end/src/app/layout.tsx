@@ -18,6 +18,10 @@ export const metadata: Metadata = {
     template: "%s | America Needs Nurses",
   },
   description: "Find jobs and hire talent.",
+  icons: {
+    icon: "/logo/ANN.png",
+    apple: "/logo/ANN.png",
+  },
 };
 
 export default function RootLayout({
