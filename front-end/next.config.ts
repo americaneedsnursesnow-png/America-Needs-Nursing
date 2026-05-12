@@ -36,6 +36,13 @@ const nextConfig: NextConfig = {
     };
   },
   images: {
+    /**
+     * Self-hosted (VPS + nginx): `next/image` normally hits `/_next/image`, which must be
+     * proxied to this Node process. If that route is missing or blocked, all public-folder
+     * images break. `unoptimized` serves `/hero/...`, `/logo/...` etc. as plain URLs instead.
+     * Remove this (and proxy `/_next/image` to Next) when you want the built-in optimizer.
+     */
+    unoptimized: true,
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
