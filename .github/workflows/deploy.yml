@@ -18,17 +18,30 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /var/www/America-Needs-Nursing
+            bash -lc '
+              export PATH=$PATH:/usr/bin:/usr/local/bin
 
-            # Backend
-            cd ann-backend
-            git pull origin main
-            npm install
-            npm run build
-            pm2 reload ann-backend
+              node -v
+              npm -v
+              pm2 -v
 
-            # Frontend
-            cd ../front-end
-            git pull origin main
-            npm install
-            npm run build
+              cd /var/www/America-Needs-Nursing
+
+              # Backend
+              cd ann-backend
+              git reset --hard
+              git pull origin main
+              npm install
+              npm run build
+              pm2 reload ann-backend || pm2 start npm --name ann-backend -- start
+
+              # Frontend
+              cd ../front-end
+              git reset --hard
+              git pull origin main
+              npm install
+              npm run build
+              pm2 reload ann-frontend || pm2 start npm --name ann-frontend -- start -- -p 3003
+
+              pm2 save
+            '
