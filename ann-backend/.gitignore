@@ -4,11 +4,7 @@ node_modules/
 # Build
 dist/
 
-# Uploaded nurse resumes (local dev)
-uploads/
 
-# Environment
-.env
 
 # Logs / coverage
 logs/
