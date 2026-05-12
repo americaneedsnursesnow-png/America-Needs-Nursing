@@ -60,8 +60,8 @@ function ResetPasswordForm() {
           className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
           role="alert"
         >
-          This reset link is invalid or incomplete. Open the link from your email, or request a
-          new one.
+          This reset link is invalid or incomplete. Request a new code from forgot password, or
+          open the link from your email.
         </p>
         <p className="text-center text-sm text-gray-500">
           <Link href="/forgot-password" className="font-bold text-[var(--color-button)] hover:underline">
@@ -148,7 +148,10 @@ export default function ResetPasswordPage() {
           {/* eslint-disable-next-line @next/next/no-img-element -- marketing logo */}
           <img src="/logo/ANN.png" alt="Logo" className="mx-auto mb-4 h-12" />
           <h1 className="text-3xl font-extrabold text-gray-900">Set new password</h1>
-          <p className="mt-2 text-gray-500">Choose a strong password for your account.</p>
+          <p className="mt-2 text-gray-500">
+            Choose a strong password. If you came from the forgot-password flow, your email code
+            was already verified.
+          </p>
         </div>
 
         <Suspense

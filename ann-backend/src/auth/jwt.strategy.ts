@@ -35,7 +35,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtBody): Promise<JwtUserPayload> {
-    if (payload.typ === 'pwd_reset') {
+    if (payload.typ === 'pwd_reset' || payload.typ === 'pwd_reset_otp') {
       throw new UnauthorizedException();
     }
     if (!payload.email || payload.role === undefined) {

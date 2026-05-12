@@ -20,6 +20,7 @@ import {
 } from '../common/mappers/public-user.mapper';
 import { getConfigNumber } from '../common/utils/env.util';
 import { Client, NurseProfile, User, UserRole } from '../database/entities';
+import { escapeAttr, normaliseFrontendBase } from '../mail/email-layouts';
 import { MailService } from '../mail/mail.service';
 import { NewsletterService } from '../newsletter/newsletter.service';
 import type { JwtUserPayload } from './types/jwt-user-payload';
@@ -31,12 +32,11 @@ import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 
 const BCRYPT_ROUNDS = 10;
-const RESET_TOKEN_EXPIRES = '1h';
 
 type PasswordResetJwtPayload = {
   sub: string;
   clientName: string;
-  typ: 'pwd_reset';
+  typ: 'pwd_reset' | 'pwd_reset_otp';
 };
 
 type CachedOtpRecord = {
@@ -136,18 +136,18 @@ export class AuthService {
 
     if (user.role === UserRole.NURSE) {
       try {
-        const base =
-          this.config.get<string>('FRONTEND_URL')?.trim() ||
-          'http://localhost:3001';
-        const origin = base.replace(/\/$/, '');
+        const origin = normaliseFrontendBase(
+          this.config.get<string>('FRONTEND_URL'),
+        );
         const signInUrl = `${origin}/sign-in`;
+        const jobsUrl = `${origin}/jobs`;
         const html = `
       <p>Hello,</p>
       <p>Your nurse account on <strong>${this.escapeHtml(
         clientName,
       )}</strong> was created successfully (${this.escapeHtml(email)}).</p>
       <p>You can sign in to browse jobs, apply, and use the nurse community when available.</p>
-      <p><a href="${signInUrl}">Sign in</a></p>
+      <p><a href="${escapeAttr(signInUrl)}">Sign in</a> · <a href="${escapeAttr(jobsUrl)}">Browse open jobs</a></p>
       <p>If you did not create this account, please contact support.</p>
     `;
         await this.mailService.sendHtmlTo(
@@ -202,75 +202,47 @@ export class AuthService {
 
   /**
    * Always returns the same message so callers cannot infer whether the email exists.
-   * Sends mail when SMTP is configured and the user has a password set.
+   * Sends a one-time code by email when SMTP is configured and the user has a password set.
    */
   async requestPasswordReset(
     dto: ForgotPasswordDto,
-  ): Promise<{ message: string }> {
+  ): Promise<{ message: string; otpExpiresInSeconds: number }> {
     const email = dto.email.trim().toLowerCase();
     const clientName = dto.clientName.trim();
-    const generic =
-      'If an account exists for that email, we sent password reset instructions.';
-
-    const user = await this.usersRepository.findOne({
-      where: { clientName, email },
+    return this.sendEmailOtp(email, clientName, {
+      requirePassword: true,
+      purpose: 'forgot',
     });
-    if (!user?.passwordHash) {
-      return { message: generic };
-    }
-
-    const token = await this.jwtService.signAsync(
-      {
-        sub: user.id,
-        clientName: user.clientName,
-        typ: 'pwd_reset' as const,
-      } satisfies PasswordResetJwtPayload,
-      { expiresIn: RESET_TOKEN_EXPIRES },
-    );
-
-    const base =
-      this.config.get<string>('FRONTEND_URL')?.trim() ||
-      'http://localhost:3001';
-    const origin = base.replace(/\/$/, '');
-    const resetUrl = `${origin}/reset-password?token=${encodeURIComponent(token)}`;
-
-    const html = `
-      <p>Hello,</p>
-      <p>We received a request to reset the password for your <strong>${this.escapeHtml(
-        clientName,
-      )}</strong> account (${this.escapeHtml(email)}).</p>
-      <p><a href="${resetUrl}">Set a new password</a></p>
-      <p>This link expires in one hour. If you did not request a reset, you can ignore this email.</p>
-    `;
-
-    try {
-      await this.mailService.sendHtmlTo(
-        user.email,
-        'Reset your password',
-        html,
-      );
-    } catch (err) {
-      this.logger.error(
-        `Password reset email failed for ${email}`,
-        err instanceof Error ? err.stack : String(err),
-      );
-    }
-
-    return { message: generic };
   }
 
-  async sendOtp(dto: SendOtpDto): Promise<{ message: string }> {
+  async sendOtp(
+    dto: SendOtpDto,
+  ): Promise<{ message: string; otpExpiresInSeconds: number }> {
     const email = dto.email.trim().toLowerCase();
     const clientName = dto.clientName.trim();
+    return this.sendEmailOtp(email, clientName, {
+      requirePassword: false,
+      purpose: 'generic',
+    });
+  }
+
+  private async sendEmailOtp(
+    email: string,
+    clientName: string,
+    options: { requirePassword: boolean; purpose: 'forgot' | 'generic' },
+  ): Promise<{ message: string; otpExpiresInSeconds: number }> {
     const otpTtlMs = this.getOtpTtlMs();
+    const otpExpiresInSeconds = Math.ceil(otpTtlMs / 1000);
     const generic =
-      'If an account exists for that email, we sent a verification code.';
+      options.purpose === 'forgot'
+        ? 'If an account exists for that email, we sent a password reset code.'
+        : 'If an account exists for that email, we sent a verification code.';
 
     const user = await this.usersRepository.findOne({
       where: { clientName, email },
     });
-    if (!user) {
-      return { message: generic };
+    if (!user || (options.requirePassword && !user.passwordHash)) {
+      return { message: generic, otpExpiresInSeconds };
     }
 
     const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
@@ -281,15 +253,33 @@ export class AuthService {
 
     await this.cacheManager.set(otpKey, payload, otpTtlMs);
 
-    const html = `
+    const minutes = Math.ceil(otpTtlMs / 60_000);
+    const html =
+      options.purpose === 'forgot'
+        ? `
+      <p>Hello,</p>
+      <p>We received a request to reset the password for your <strong>${this.escapeHtml(
+        clientName,
+      )}</strong> account (${this.escapeHtml(email)}).</p>
+      <p>Your reset code is:</p>
+      <p style="font-size: 24px; letter-spacing: 4px;"><strong>${code}</strong></p>
+      <p>This code expires in ${minutes} minute${minutes === 1 ? '' : 's'}.</p>
+      <p>If you did not request a reset, you can ignore this email.</p>
+    `
+        : `
       <p>Hello,</p>
       <p>Your verification code for <strong>${this.escapeHtml(clientName)}</strong> is:</p>
       <p style="font-size: 24px; letter-spacing: 4px;"><strong>${code}</strong></p>
-      <p>This code expires in ${Math.ceil(otpTtlMs / 60000)} minutes.</p>
+      <p>This code expires in ${minutes} minute${minutes === 1 ? '' : 's'}.</p>
     `;
 
+    const subject =
+      options.purpose === 'forgot'
+        ? 'Reset your password — verification code'
+        : 'Your verification code';
+
     try {
-      await this.mailService.sendHtmlTo(email, 'Your verification code', html);
+      await this.mailService.sendHtmlTo(email, subject, html);
     } catch (err) {
       this.logger.error(
         `OTP email failed for ${email}`,
@@ -297,12 +287,17 @@ export class AuthService {
       );
     }
 
-    return { message: generic };
+    return { message: generic, otpExpiresInSeconds };
   }
 
   async verifyOtp(
     dto: VerifyOtpDto,
-  ): Promise<{ message: string; verified: true }> {
+  ): Promise<{
+    message: string;
+    verified: true;
+    resetToken: string;
+    resetTokenExpiresInSeconds: number;
+  }> {
     const email = dto.email.trim().toLowerCase();
     const clientName = dto.clientName.trim();
     const otpKey = this.getOtpCacheKey(clientName, email);
@@ -317,10 +312,30 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired one-time password.');
     }
 
+    const user = await this.usersRepository.findOne({
+      where: { clientName, email },
+    });
+    if (!user?.passwordHash) {
+      throw new BadRequestException('Invalid or expired one-time password.');
+    }
+
     await this.cacheManager.del(otpKey);
+
+    const resetTtlSec = this.getPasswordResetTokenTtlSeconds();
+    const resetToken = await this.jwtService.signAsync(
+      {
+        sub: user.id,
+        clientName: user.clientName,
+        typ: 'pwd_reset_otp' as const,
+      } satisfies PasswordResetJwtPayload,
+      { expiresIn: resetTtlSec },
+    );
+
     return {
       message: 'OTP verified successfully.',
       verified: true,
+      resetToken,
+      resetTokenExpiresInSeconds: resetTtlSec,
     };
   }
 
@@ -336,7 +351,10 @@ export class AuthService {
     } catch {
       throw new BadRequestException('Invalid or expired reset link.');
     }
-    if (payload.typ !== 'pwd_reset' || payload.clientName !== clientName) {
+    if (
+      (payload.typ !== 'pwd_reset' && payload.typ !== 'pwd_reset_otp') ||
+      payload.clientName !== clientName
+    ) {
       throw new BadRequestException('Invalid or expired reset link.');
     }
 
@@ -353,7 +371,17 @@ export class AuthService {
   }
 
   private getOtpTtlMs(): number {
-    return getConfigNumber(this.config, 'AUTH_OTP_TTL_SECONDS', 300, 1) * 1000;
+    return getConfigNumber(this.config, 'AUTH_OTP_TTL_SECONDS', 600, 1) * 1000;
+  }
+
+  /** Seconds — JWT after OTP verify; user must set password before this expires. */
+  private getPasswordResetTokenTtlSeconds(): number {
+    return getConfigNumber(
+      this.config,
+      'AUTH_OTP_RESET_TOKEN_SECONDS',
+      600,
+      60,
+    );
   }
 
   private getOtpCacheKey(clientName: string, email: string): string {

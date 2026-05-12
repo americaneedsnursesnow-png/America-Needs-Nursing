@@ -3,8 +3,10 @@ import {
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, IsNull, MoreThan, Or, Repository } from 'typeorm';
 import type { JwtUserPayload } from '../auth/types/jwt-user-payload';
@@ -25,15 +27,21 @@ import { sanitizeJobRichHtml } from '../common/html/sanitize-stored-html';
 import { uniqueSlugFromTitle } from '../common/slug.util';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
+import { escapeAttr, escapeHtml, normaliseFrontendBase } from '../mail/email-layouts';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class JobsService {
+  private readonly logger = new Logger(JobsService.name);
+
   constructor(
     @InjectRepository(Job)
     private readonly jobsRepository: Repository<Job>,
     private readonly companiesService: CompaniesService,
     private readonly jobPackagesService: JobPackagesService,
     @InjectDataSource() private readonly dataSource: DataSource,
+    private readonly mailService: MailService,
+    private readonly config: ConfigService,
   ) {}
 
   async create(user: JwtUserPayload, dto: CreateJobDto): Promise<Job> {
@@ -162,7 +170,7 @@ export class JobsService {
         nextStatus === JobStatus.PUBLISHED && job.status !== JobStatus.PUBLISHED;
 
       if (firstTimePublish) {
-        return this.dataSource.transaction(async (em) => {
+        const saved = await this.dataSource.transaction(async (em) => {
           await this.applyStatusChange(
             job,
             company.id,
@@ -171,6 +179,8 @@ export class JobsService {
           );
           return em.getRepository(Job).save(job);
         });
+        void this.sendEmployerJobPublishedEmail(user, saved, company.name);
+        return saved;
       }
 
       await this.applyStatusChange(job, company.id, nextStatus, undefined);
@@ -419,5 +429,41 @@ export class JobsService {
       throw new NotFoundException('Job not found');
     }
     return job;
+  }
+
+  private async sendEmployerJobPublishedEmail(
+    employer: JwtUserPayload,
+    job: Job,
+    companyName: string,
+  ): Promise<void> {
+    const to = employer.email.trim();
+    if (!to) {
+      this.logger.warn(
+        `Job published (${job.id}): empty employer email; skipping confirmation`,
+      );
+      return;
+    }
+    const origin = normaliseFrontendBase(
+      this.config.get<string>('FRONTEND_URL'),
+    );
+    const jobUrl = `${origin}/jobs/${encodeURIComponent(job.slug)}`;
+    const html = `
+      <p>Hello,</p>
+      <p>Your job listing <strong>${escapeHtml(
+        job.title,
+      )}</strong> for <strong>${escapeHtml(
+        companyName,
+      )}</strong> is now <strong>published</strong> and visible to nurses.</p>
+      <p><a href="${escapeAttr(jobUrl)}">View the public job page</a></p>
+      <p>You can edit or close the listing from your employer dashboard.</p>
+    `;
+    try {
+      await this.mailService.sendHtmlTo(to, 'Your job is live', html);
+    } catch (err: unknown) {
+      this.logger.warn(
+        `Job published confirmation email failed for ${to} (job ${job.id})`,
+        err instanceof Error ? err.stack : String(err),
+      );
+    }
   }
 }

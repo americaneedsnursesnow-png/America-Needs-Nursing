@@ -381,11 +381,11 @@ async function parseMessageResponse(res: Response): Promise<void> {
   }
 }
 
-/** Request a password-reset email (always treat as success for UX when status is 2xx). */
+/** Request a password-reset code by email (OTP). Treat 2xx as success for UX. */
 export async function forgotPasswordRequest(input: {
   email: string;
   clientName?: string;
-}): Promise<void> {
+}): Promise<{ otpExpiresInSeconds: number }> {
   const clientName = input.clientName ?? getAuthClientName();
   const res = await spacingFetch(`${getApiBaseUrl()}/auth/forgot-password`, {
     method: "POST",
@@ -398,7 +398,70 @@ export async function forgotPasswordRequest(input: {
       email: input.email.trim().toLowerCase(),
     }),
   });
-  await parseMessageResponse(res);
+  const text = await res.text();
+  let data: unknown = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
+  }
+  if (!res.ok) {
+    const obj = (data ?? {}) as NestErrorBody;
+    const msg = normalizeMessage(obj.message) || res.statusText;
+    throw new AuthApiError(res.status, msg, data);
+  }
+  const obj = (data ?? {}) as { otpExpiresInSeconds?: number };
+  const otpExpiresInSeconds =
+    typeof obj.otpExpiresInSeconds === "number" && Number.isFinite(obj.otpExpiresInSeconds)
+      ? obj.otpExpiresInSeconds
+      : 600;
+  return { otpExpiresInSeconds };
+}
+
+/** After user enters the email OTP; returns a short-lived token for `/reset-password?token=`. */
+export async function verifyPasswordResetOtp(input: {
+  email: string;
+  code: string;
+  clientName?: string;
+}): Promise<{ resetToken: string; resetTokenExpiresInSeconds: number }> {
+  const clientName = input.clientName ?? getAuthClientName();
+  const res = await spacingFetch(`${getApiBaseUrl()}/auth/otp/verify`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      clientName,
+      email: input.email.trim().toLowerCase(),
+      code: input.code.trim(),
+    }),
+  });
+  const text = await res.text();
+  let data: unknown = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
+  }
+  if (!res.ok) {
+    const obj = (data ?? {}) as NestErrorBody;
+    const msg = normalizeMessage(obj.message) || res.statusText;
+    throw new AuthApiError(res.status, msg, data);
+  }
+  const obj = (data ?? {}) as {
+    resetToken?: string;
+    resetTokenExpiresInSeconds?: number;
+  };
+  if (!obj.resetToken || typeof obj.resetToken !== "string") {
+    throw new AuthApiError(502, "Invalid response from server.", data);
+  }
+  const resetTokenExpiresInSeconds =
+    typeof obj.resetTokenExpiresInSeconds === "number" &&
+    Number.isFinite(obj.resetTokenExpiresInSeconds)
+      ? obj.resetTokenExpiresInSeconds
+      : 600;
+  return { resetToken: obj.resetToken, resetTokenExpiresInSeconds };
 }
 
 export async function resetPasswordRequest(input: {
