@@ -21,23 +21,40 @@ export function getApiBaseUrl(): string {
 }
 
 /**
+ * Nest HTTP(S) origin for **browser** Socket.IO only (set in `.env.local` / build env).
+ * `NEXT_PUBLIC_*` is required so the value is available to client components.
+ *
+ * Order (first non-empty wins):
+ * 1. `NEXT_PUBLIC_SOCKET_ORIGIN` — preferred
+ * 2. `NEXT_PUBLIC_API_BASE_URL` — if it is a full `http(s)://` URL
+ * 3. `NEXT_PUBLIC_NEST_SOCKET_ORIGIN` — legacy
+ * 4. `http://localhost:3000` — local dev default
+ */
+export function getSocketIoBackendOrigin(): string {
+  const primary = process.env.NEXT_PUBLIC_SOCKET_ORIGIN?.trim();
+  if (primary) {
+    return primary.replace(/\/$/, "");
+  }
+  const api = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+  if (api && /^https?:\/\//i.test(api)) {
+    return api.replace(/\/$/, "");
+  }
+  const legacy = process.env.NEXT_PUBLIC_NEST_SOCKET_ORIGIN?.trim();
+  if (legacy) {
+    return legacy.replace(/\/$/, "");
+  }
+  return "http://localhost:3000";
+}
+
+/**
  * Socket.IO for `/community-chat`. Call only from the client (e.g. `useEffect`).
  *
  * WebSocket upgrades cannot be proxied through Next.js Route Handlers, so when REST uses `/api/nest`,
- * the socket connects **directly** to Nest via `NEXT_PUBLIC_NEST_SOCKET_ORIGIN` (defaults to 127.0.0.1:3000).
- * Nest CORS must allow your Next origin (ann-backend uses `origin: true`).
+ * the socket connects **directly** to Nest using {@link getSocketIoBackendOrigin}.
+ * Nest `CORS_ORIGINS` must include your Next site origin in production.
  */
 export function getCommunityChatSocketTarget(): { url: string; path: string } {
-  const raw = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
-  if (raw && /^https?:\/\//i.test(raw)) {
-    const clean = raw.replace(/\/$/, "");
-    return { url: `${clean}/community-chat`, path: "/socket.io" };
-  }
-  // Prefer `localhost` over 127.0.0.1 so browser origin matches (helps WS upgrade if enabled).
-  const nest =
-    process.env.NEXT_PUBLIC_NEST_SOCKET_ORIGIN?.trim() ||
-    "http://localhost:3000";
-  const clean = nest.replace(/\/$/, "");
+  const clean = getSocketIoBackendOrigin();
   return { url: `${clean}/community-chat`, path: "/socket.io" };
 }
 
@@ -46,15 +63,7 @@ export function getCommunityChatSocketTarget(): { url: string; path: string } {
  * Same origin rules as {@link getCommunityChatSocketTarget}.
  */
 export function getJobMessagingSocketTarget(): { url: string; path: string } {
-  const raw = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
-  if (raw && /^https?:\/\//i.test(raw)) {
-    const clean = raw.replace(/\/$/, "");
-    return { url: `${clean}/job-messaging`, path: "/socket.io" };
-  }
-  const nest =
-    process.env.NEXT_PUBLIC_NEST_SOCKET_ORIGIN?.trim() ||
-    "http://localhost:3000";
-  const clean = nest.replace(/\/$/, "");
+  const clean = getSocketIoBackendOrigin();
   return { url: `${clean}/job-messaging`, path: "/socket.io" };
 }
 

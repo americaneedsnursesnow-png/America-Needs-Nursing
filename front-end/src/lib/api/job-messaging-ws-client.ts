@@ -43,7 +43,7 @@ export async function jobMessagingEmit<
     const msg =
       e instanceof Error
         ? e.message
-        : "Cannot connect to job messaging. Check NEXT_PUBLIC_NEST_SOCKET_ORIGIN and that ann-backend is running.";
+        : "Cannot connect to job messaging. Check NEXT_PUBLIC_SOCKET_ORIGIN (or NEXT_PUBLIC_NEST_SOCKET_ORIGIN) and that ann-backend is running.";
     throw new BackendRequestError(502, msg, null);
   }
 

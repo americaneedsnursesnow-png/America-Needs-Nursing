@@ -52,12 +52,12 @@ Configure JWT, database, Redis, email, Stripe, and other settings in `ann-backen
 ```bash
 cd front-end
 cp .env.local.example .env.local
-# Point API_UPSTREAM_URL and NEXT_PUBLIC_NEST_SOCKET_ORIGIN at your Nest URL/port.
+# Point API_UPSTREAM_URL and NEXT_PUBLIC_SOCKET_ORIGIN at your Nest URL/port.
 npm install
 npm run dev             # http://localhost:3003
 ```
 
-The browser calls the API via the Next **`/api/nest`** proxy; Socket.IO uses `NEXT_PUBLIC_NEST_SOCKET_ORIGIN`. Details: [`front-end/README.md`](front-end/README.md).
+The browser calls the API via the Next **`/api/nest`** proxy; Socket.IO uses `NEXT_PUBLIC_SOCKET_ORIGIN` (see `src/lib/api/env.ts`). Details: [`front-end/README.md`](front-end/README.md).
 
 ## Deployment
 

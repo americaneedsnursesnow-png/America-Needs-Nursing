@@ -38,7 +38,7 @@ Dev server listens on **port 3003** (see `package.json`). Default Nest API is **
 cd front-end
 npm install
 cp .env.local.example .env.local
-# Edit .env.local  especially API_UPSTREAM_URL and NEXT_PUBLIC_NEST_SOCKET_ORIGIN
+# Edit .env.local -- especially API_UPSTREAM_URL and NEXT_PUBLIC_SOCKET_ORIGIN.
 npm run dev
 ```
 
@@ -60,12 +60,12 @@ Open [http://localhost:3003](http://localhost:3003).
 
 ## Environment
 
-Copy **`.env.local.example`** ù **`.env.local`** and adjust. Highlights:
+Copy **`.env.local.example`** ? **`.env.local`** and adjust. Highlights:
 
 | Variable | Role |
 |----------|------|
 | `API_UPSTREAM_URL` | Nest base URL for the Next `/api/nest` proxy and server-side fetch |
-| `NEXT_PUBLIC_NEST_SOCKET_ORIGIN` | Socket.IO target (not proxied like REST); align host with the browser |
+| `NEXT_PUBLIC_SOCKET_ORIGIN` | Nest origin for Socket.IO in the browser (not proxied like REST); use your public API URL in production |
 | `NEXT_PUBLIC_ANN_CLIENT_NAME` | Tenant / client name; must match backend |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe.js (employer checkout); mode must match backend keys |
 
