@@ -11,7 +11,7 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ARG API_UPSTREAM_URL=http://ann-backend:3000
+ARG API_UPSTREAM_URL=http://ann-backend:3001
 ENV API_UPSTREAM_URL=${API_UPSTREAM_URL}
 
 ARG NEXT_PUBLIC_SOCKET_ORIGIN

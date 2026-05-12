@@ -35,7 +35,7 @@ function upstreamUnavailableResponse(upstream: string, error: unknown): NextResp
   const hint =
     code === "ECONNREFUSED"
       ? "Nothing is listening on that host/port. Start ann-backend (Nest) and ensure its PORT matches API_UPSTREAM_URL."
-      : "Check that ann-backend is running and API_UPSTREAM_URL in .env.local points to it (default http://127.0.0.1:3000).";
+      : "Check that ann-backend is running and API_UPSTREAM_URL in .env.local points to it (default http://127.0.0.1:3001).";
 
   return NextResponse.json(
     {

@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 /** Nest ann-backend (HTTP + Socket.IO). Used by /api/nest rewrites. */
 const API_UPSTREAM =
-  process.env.API_UPSTREAM_URL?.replace(/\/$/, "") || "http://127.0.0.1:3000";
+  process.env.API_UPSTREAM_URL?.replace(/\/$/, "") || "http://127.0.0.1:3001";
 
 const nextConfig: NextConfig = {
   output: "standalone",

@@ -28,7 +28,7 @@ Next.js (App Router) app for the **ann-frontend** package in the [monorepo root]
 | npm | Package manager for this app |
 | `ann-backend` | REST and Socket.IO; run separately for full functionality |
 
-Dev server listens on **port 3003** (see `package.json`). Default Nest API is **3000** (see `ann-backend`).
+Dev server listens on **port 3003** (see `package.json`). Default Nest API is **3001** (see `ann-backend`).
 
 ---
 

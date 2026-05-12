@@ -42,7 +42,7 @@ Compose starts **PostgreSQL** (host port **5433**), **Redis** (**6379**), and **
 cd ann-backend
 npm install
 npm run migration:run   # when you need schema updates (see TypeORM scripts in package.json)
-npm run start:dev       # default http://localhost:3000
+npm run start:dev       # default http://localhost:3001
 ```
 
 Configure JWT, database, Redis, email, Stripe, and other settings in `ann-backend/.env` (start from `.env.example`).

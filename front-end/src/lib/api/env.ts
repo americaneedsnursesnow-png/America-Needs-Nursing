@@ -6,7 +6,7 @@
  *   Private Network Access failures for many dev setups. Configure Nest via `API_UPSTREAM_URL`
  *   on the Next server instead.
  * - **Server (SSR / Route Handlers):** `NEXT_PUBLIC_API_BASE_URL` if set, else `API_UPSTREAM_URL`,
- *   else `http://127.0.0.1:3000`.
+ *   else `http://127.0.0.1:3001`.
  */
 export function getApiBaseUrl(): string {
   if (typeof window !== "undefined") {
@@ -16,7 +16,7 @@ export function getApiBaseUrl(): string {
   if (raw && raw.length > 0) {
     return raw.replace(/\/$/, "");
   }
-  const internal = process.env.API_UPSTREAM_URL?.trim() || "http://127.0.0.1:3000";
+  const internal = process.env.API_UPSTREAM_URL?.trim() || "http://127.0.0.1:3001";
   return internal.replace(/\/$/, "");
 }
 
@@ -28,7 +28,7 @@ export function getApiBaseUrl(): string {
  * 1. `NEXT_PUBLIC_SOCKET_ORIGIN` — preferred
  * 2. `NEXT_PUBLIC_API_BASE_URL` — if it is a full `http(s)://` URL
  * 3. `NEXT_PUBLIC_NEST_SOCKET_ORIGIN` — legacy
- * 4. `http://localhost:3000` — local dev default
+ * 4. `http://localhost:3001` — local dev default
  */
 export function getSocketIoBackendOrigin(): string {
   const primary = process.env.NEXT_PUBLIC_SOCKET_ORIGIN?.trim();
@@ -43,7 +43,7 @@ export function getSocketIoBackendOrigin(): string {
   if (legacy) {
     return legacy.replace(/\/$/, "");
   }
-  return "http://localhost:3000";
+  return "http://localhost:3001";
 }
 
 /**
