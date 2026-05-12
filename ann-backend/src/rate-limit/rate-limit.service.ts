@@ -93,16 +93,25 @@ export class RateLimitService implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     @Inject(RATE_LIMIT_REDIS)
-    private readonly redis: RedisClientType,
+    private readonly redis: RedisClientType | null,
     private readonly jwtService: JwtService,
     private readonly rateLimitConfig: RateLimitConfigService,
   ) {}
 
   async onModuleInit(): Promise<void> {
+    if (!this.redis) {
+      this.logger.warn(
+        'Rate limit Redis not connected; all requests allowed (no Redis-backed limits)',
+      );
+      return;
+    }
     this.scriptSha = await this.redis.scriptLoad(RATE_LIMIT_LUA);
   }
 
   async onModuleDestroy(): Promise<void> {
+    if (!this.redis) {
+      return;
+    }
     if (this.redis.isOpen) {
       await this.redis.close();
     }
@@ -115,6 +124,23 @@ export class RateLimitService implements OnModuleInit, OnModuleDestroy {
   ): Promise<RateLimitDecision> {
     const policy = this.rateLimitConfig.getPolicy(policyName);
     const tracker = await this.resolveTracker(request);
+
+    if (!this.redis) {
+      return {
+        allowed: true,
+        blocked: false,
+        policy,
+        tracker,
+        routeKey,
+        currentHits: 0,
+        remainingHits: policy.limit,
+        retryAfterMs: 0,
+        windowResetMs: 0,
+        violationCount: 0,
+        captchaRequired: false,
+      };
+    }
+
     const keys = this.buildRedisKeys(policy, tracker);
     const security = this.rateLimitConfig.getSecurityConfig();
     const result = await this.executeRateLimitScript(keys, [
@@ -243,6 +269,9 @@ export class RateLimitService implements OnModuleInit, OnModuleDestroy {
     keys: string[],
     args: string[],
   ): Promise<number[]> {
+    if (!this.redis) {
+      throw new Error('Rate limit Redis is not available');
+    }
     if (!this.scriptSha) {
       this.scriptSha = await this.redis.scriptLoad(RATE_LIMIT_LUA);
     }

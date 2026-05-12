@@ -1,4 +1,4 @@
-import { ValidationPipe } from '@nestjs/common';
+import { Logger as NestLogger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -83,10 +83,20 @@ async function bootstrap() {
     'SOCKET_IO_REDIS_ADAPTER',
     false,
   );
+  const bootstrapLog = new NestLogger('Bootstrap');
   if (useRedisSocketAdapter) {
     const redisIoAdapter = new RedisIoAdapter(app);
-    await redisIoAdapter.connectToRedis(buildRedisConnectionUrl(config));
-    app.useWebSocketAdapter(redisIoAdapter);
+    const redisOk = await redisIoAdapter.connectToRedis(
+      buildRedisConnectionUrl(config),
+    );
+    if (redisOk) {
+      app.useWebSocketAdapter(redisIoAdapter);
+    } else {
+      bootstrapLog.warn(
+        'SOCKET_IO_REDIS_ADAPTER=true but Redis did not connect; using in-process Socket.IO adapter (single-instance only)',
+      );
+      app.useWebSocketAdapter(new AnnIoAdapter(app));
+    }
   } else {
     app.useWebSocketAdapter(new AnnIoAdapter(app));
   }

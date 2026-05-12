@@ -29,7 +29,7 @@ import { RateLimitService } from './rate-limit.service';
     {
       provide: RATE_LIMIT_REDIS,
       inject: [ConfigService],
-      useFactory: async (config: ConfigService): Promise<RedisClientType> => {
+      useFactory: async (config: ConfigService): Promise<RedisClientType | null> => {
         const logger = new Logger('RateLimitRedis');
         const client = createClient({
           url: buildRedisConnectionUrl(config),
@@ -45,11 +45,24 @@ import { RateLimitService } from './rate-limit.service';
           );
         });
 
-        if (!client.isOpen) {
-          await client.connect();
+        try {
+          if (!client.isOpen) {
+            await client.connect();
+          }
+          return client;
+        } catch (error) {
+          logger.warn(
+            `Redis unavailable for rate limiting; limits disabled until restart (${error instanceof Error ? error.message : String(error)})`,
+          );
+          try {
+            if (client.isOpen) {
+              await client.quit();
+            }
+          } catch {
+            /* ignore */
+          }
+          return null;
         }
-
-        return client;
       },
     },
     RateLimitService,
