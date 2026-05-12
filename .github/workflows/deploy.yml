@@ -19,15 +19,20 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             bash -lc '
-              export PATH=$PATH:/usr/bin:/usr/local/bin
+              # 🔥 LOAD NVM (CRITICAL FIX)
+              export NVM_DIR="/root/.nvm"
+              [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
-              node -v
-              npm -v
-              pm2 -v
+              # use correct node version
+              nvm use 22 || nvm use default
+
+              echo "Node: $(node -v)"
+              echo "NPM: $(npm -v)"
+              echo "PM2: $(pm2 -v)"
 
               cd /var/www/America-Needs-Nursing
 
-              # Backend
+              # ================= BACKEND =================
               cd ann-backend
               git reset --hard
               git pull origin main
@@ -35,7 +40,7 @@ jobs:
               npm run build
               pm2 reload ann-backend || pm2 start npm --name ann-backend -- start
 
-              # Frontend
+              # ================= FRONTEND =================
               cd ../front-end
               git reset --hard
               git pull origin main
