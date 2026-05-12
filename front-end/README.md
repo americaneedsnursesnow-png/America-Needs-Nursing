@@ -60,16 +60,17 @@ Open [http://localhost:3003](http://localhost:3003).
 
 ## Environment
 
-Copy **`.env.local.example`** ? **`.env.local`** and adjust. Highlights:
+Copy **`.env.local.example`** to **`.env.local`** and adjust. Highlights:
 
 | Variable | Role |
 |----------|------|
-| `API_UPSTREAM_URL` | Nest base URL for the Next `/api/nest` proxy and server-side fetch |
-| `NEXT_PUBLIC_SOCKET_ORIGIN` | Nest origin for Socket.IO in the browser (not proxied like REST); use your public API URL in production |
+| `API_UPSTREAM_URL` | Nest URL for the Next **`/api/nest`** proxy and for server-side fetch when `NEXT_PUBLIC_API_BASE_URL` is unset |
+| `NEXT_PUBLIC_API_BASE_URL` | If a full **`https://?`** URL, the **browser** calls Nest directly (skips `/api/nest`); requires Nest **`CORS_ORIGINS`** to include your site |
+| `NEXT_PUBLIC_SOCKET_ORIGIN` | Nest origin for Socket.IO in the browser |
 | `NEXT_PUBLIC_ANN_CLIENT_NAME` | Tenant / client name; must match backend |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe.js (employer checkout); mode must match backend keys |
 
-In the **browser**, REST goes to same-origin **`/api/nest`** (see `src/lib/api/env.ts`). Comments in `.env.local.example` explain 503s and Stripe pitfalls.
+In the **browser**, REST uses **`/api/nest`** unless `NEXT_PUBLIC_API_BASE_URL` is a full `http(s)://` URL (see `src/lib/api/env.ts`). Comments in `.env.local.example` explain 503s and Stripe pitfalls.
 
 ---
 

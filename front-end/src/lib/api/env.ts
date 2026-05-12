@@ -1,15 +1,19 @@
 /**
  * Base URL for REST (and browser fetch targets).
  *
- * - **Browser:** always same-origin `/api/nest` (proxied by `app/api/nest/[...path]/route.ts`).
- *   `NEXT_PUBLIC_API_BASE_URL` does **not** apply in the browser — direct calls caused CORS /
- *   Private Network Access failures for many dev setups. Configure Nest via `API_UPSTREAM_URL`
- *   on the Next server instead.
+ * - **Browser:** default is same-origin **`/api/nest`** (proxied by `app/api/nest/[...path]/route.ts`).
+ *   Set **`NEXT_PUBLIC_API_BASE_URL`** to a full **`http(s)://...`** URL (e.g. `https://api.example.com`)
+ *   to call Nest **directly** from the browser instead of `/api/nest`. Nest **`CORS_ORIGINS`** must
+ *   include your Next site origin (e.g. `https://www.example.com`).
  * - **Server (SSR / Route Handlers):** `NEXT_PUBLIC_API_BASE_URL` if set, else `API_UPSTREAM_URL`,
  *   else `http://127.0.0.1:3001`.
  */
 export function getApiBaseUrl(): string {
   if (typeof window !== "undefined") {
+    const browserDirect = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+    if (browserDirect && /^https?:\/\//i.test(browserDirect)) {
+      return browserDirect.replace(/\/$/, "");
+    }
     return "/api/nest";
   }
   const raw = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();

@@ -57,7 +57,7 @@ npm install
 npm run dev             # http://localhost:3003
 ```
 
-The browser calls the API via the Next **`/api/nest`** proxy; Socket.IO uses `NEXT_PUBLIC_SOCKET_ORIGIN` (see `src/lib/api/env.ts`). Details: [`front-end/README.md`](front-end/README.md).
+The browser calls the API via **`/api/nest`** unless **`NEXT_PUBLIC_API_BASE_URL`** is a full `https://…` URL (direct to Nest); Socket.IO uses `NEXT_PUBLIC_SOCKET_ORIGIN` (see `src/lib/api/env.ts`). Details: [`front-end/README.md`](front-end/README.md).
 
 ## Deployment
 

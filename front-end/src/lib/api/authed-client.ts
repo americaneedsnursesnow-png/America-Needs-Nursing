@@ -73,7 +73,7 @@ function extractErrorMessage(
 }
 
 const NETWORK_ERROR_HINT =
-  "Ensure ann-backend is running and API_UPSTREAM_URL in Next matches Nest’s URL/port. The browser uses same-origin /api/nest.";
+  "Ensure ann-backend is running. If the browser uses same-origin /api/nest, set API_UPSTREAM_URL on Next. If it calls the API host directly, set NEXT_PUBLIC_API_BASE_URL to that https URL and allow CORS on Nest.";
 
 function throwOnNetworkFailure(caught: unknown): never {
   const base =
