@@ -20,20 +20,56 @@ export function getOptionalConfigString(
   return readTrimmed(config, key);
 }
 
+/** Origin (scheme + host, no path) from a base URL string, or undefined if invalid. */
+export function originFromPublicBaseUrl(
+  raw: string | undefined,
+): string | undefined {
+  if (!raw) {
+    return undefined;
+  }
+  try {
+    const u = new URL(raw);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return undefined;
+  }
+}
+
+function mergeCorsWithFrontendUrl(
+  origins: string[],
+  frontendOrigin: string | undefined,
+): string[] {
+  if (!frontendOrigin) {
+    return origins;
+  }
+  if (origins.includes(frontendOrigin)) {
+    return origins;
+  }
+  return [...origins, frontendOrigin];
+}
+
 /**
  * Comma-separated `CORS_ORIGINS`. If unset or empty after parsing, returns `true`
  * (reflect request origin — OK for local dev only).
- * In `NODE_ENV=production`, `CORS_ORIGINS` must be set to a non-empty allowlist.
+ * In `NODE_ENV=production`, require a non-empty allowlist: either set `CORS_ORIGINS`,
+ * or set `FRONTEND_URL` (its origin is merged in and can satisfy production on its own
+ * when `CORS_ORIGINS` is unset).
  */
 export function getCorsOrigins(config: ConfigService): string[] | true {
   const raw = getOptionalConfigString(config, 'CORS_ORIGINS');
+  const frontendOrigin = originFromPublicBaseUrl(
+    getOptionalConfigString(config, 'FRONTEND_URL'),
+  );
   const isProd =
     (config.get<string>('NODE_ENV')?.trim().toLowerCase() ?? '') ===
     'production';
   if (!raw) {
     if (isProd) {
+      if (frontendOrigin) {
+        return [frontendOrigin];
+      }
       throw new Error(
-        'CORS_ORIGINS must be set in production (comma-separated browser origins)',
+        'CORS_ORIGINS must be set in production (comma-separated browser origins), or set FRONTEND_URL so that origin is allowed',
       );
     }
     return true;
@@ -44,13 +80,16 @@ export function getCorsOrigins(config: ConfigService): string[] | true {
     .filter((o) => o.length > 0);
   if (list.length === 0) {
     if (isProd) {
+      if (frontendOrigin) {
+        return [frontendOrigin];
+      }
       throw new Error(
-        'CORS_ORIGINS must list at least one origin in production',
+        'CORS_ORIGINS must list at least one origin in production, or set FRONTEND_URL so that origin is allowed',
       );
     }
     return true;
   }
-  return list;
+  return mergeCorsWithFrontendUrl(list, frontendOrigin);
 }
 
 export function getConfigNumber(
