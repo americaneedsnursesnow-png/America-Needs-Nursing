@@ -1,13 +1,40 @@
-name: Deploy Full Stack
+name: CI verify and deploy
 
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-  deploy:
+  verify:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            ann-backend/package-lock.json
+            front-end/package-lock.json
+
+      - name: Backend — install, build, verify artifacts
+        working-directory: ann-backend
+        run: npm ci && npm run build && npm run verify:build
+
+      - name: Frontend — install, build, verify artifacts
+        working-directory: front-end
+        run: npm ci && npm run build && npm run verify:build
+
+      - name: Frontend — Docker image (standalone + .next/static copy)
+        run: docker build -f front-end/Dockerfile -t ann-frontend-ci ./front-end
+
+  deploy:
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -38,6 +65,7 @@ jobs:
               git pull origin main
               npm install
               npm run build
+              npm run verify:build
               pm2 reload ann-backend || pm2 start npm --name ann-backend -- start
 
               # ================= FRONTEND =================
@@ -46,6 +74,7 @@ jobs:
               git pull origin main
               npm install
               npm run build
+              npm run verify:build
               pm2 reload ann-frontend || pm2 start npm --name ann-frontend -- start -- -p 3003
 
               pm2 save

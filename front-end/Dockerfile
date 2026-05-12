@@ -48,6 +48,11 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Fail the image build if standalone is missing hashed CSS (common mis-deploy symptom: unstyled site).
+RUN test -d .next/static/css \
+  && test -n "$(ls -A .next/static/css 2>/dev/null)" \
+  || (echo "ann-frontend: .next/static/css is missing or empty — copy standalone + static correctly" >&2 && exit 1)
+
 USER nextjs
 EXPOSE 3003
 ENV PORT=3003

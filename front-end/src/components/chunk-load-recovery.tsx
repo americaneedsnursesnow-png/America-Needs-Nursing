@@ -32,9 +32,27 @@ function shouldReloadNow(): boolean {
   return true;
 }
 
+/** Script or stylesheet from this build's hashed `/_next/static` tree failed to load (often 404 after deploy). */
+function isFailedNextStaticAsset(target: EventTarget | null): boolean {
+  if (target instanceof HTMLScriptElement) {
+    return target.src.includes("/_next/static/");
+  }
+  if (target instanceof HTMLLinkElement) {
+    const rel = (target.rel || "").toLowerCase();
+    if (rel !== "stylesheet" && !rel.split(/\s+/).includes("stylesheet")) {
+      return false;
+    }
+    return (
+      typeof target.href === "string" && target.href.includes("/_next/static/")
+    );
+  }
+  return false;
+}
+
 /**
- * After a new deploy, cached HTML can reference old hashed chunks under `/_next/static/`,
- * which 404 and surface as ChunkLoadError. A single hard reload fetches fresh HTML + assets.
+ * After a new deploy, cached HTML can reference old hashed assets under `/_next/static/`,
+ * which 404 and break JS (ChunkLoadError) or leave the app unstyled (CSS 404). One full
+ * reload fetches fresh HTML + asset names.
  */
 export function ChunkLoadRecovery() {
   useEffect(() => {
@@ -49,11 +67,7 @@ export function ChunkLoadRecovery() {
     };
 
     const onWindowError = (event: ErrorEvent) => {
-      const target = event.target;
-      if (
-        target instanceof HTMLScriptElement &&
-        target.src.includes("/_next/static/")
-      ) {
+      if (isFailedNextStaticAsset(event.target)) {
         if (shouldReloadNow()) {
           window.location.reload();
         }
