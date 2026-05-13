@@ -1,8 +1,15 @@
 import type { NextConfig } from "next";
 
+function resolveNestUpstream(): string {
+  const explicit = process.env.API_UPSTREAM_URL?.trim().replace(/\/$/, "");
+  if (explicit) return explicit;
+  const publicApi = process.env.NEXT_PUBLIC_API_BASE_URL?.trim().replace(/\/$/, "");
+  if (publicApi && /^https?:\/\//i.test(publicApi)) return publicApi;
+  return "http://127.0.0.1:3001";
+}
+
 /** Nest ann-backend (HTTP + Socket.IO). Used by /api/nest rewrites. */
-const API_UPSTREAM =
-  process.env.API_UPSTREAM_URL?.replace(/\/$/, "") || "http://127.0.0.1:3001";
+const API_UPSTREAM = resolveNestUpstream();
 
 const nextConfig: NextConfig = {
   output: "standalone",

@@ -2,9 +2,9 @@ name: CI verify and deploy
 
 on:
   push:
-    branches: [main]
+    branches: [production]
   pull_request:
-    branches: [main]
+    branches: [production]
 
 jobs:
   verify:
@@ -33,7 +33,7 @@ jobs:
 
   deploy:
     needs: verify
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -62,7 +62,7 @@ jobs:
               # ================= BACKEND =================
               cd ann-backend
               git reset --hard
-              git pull origin main
+              git pull origin production
               npm install
               npm run build
               npm run verify:build
@@ -71,11 +71,14 @@ jobs:
               # ================= FRONTEND =================
               cd ../front-end
               git reset --hard
-              git pull origin main
+              git pull origin production
               npm install
               npm run build
               npm run verify:build
               pm2 reload ann-frontend || pm2 start npm --name ann-frontend -- start -- -p 3003
 
               pm2 save
+
+              # ================= NGINX =================
+              sudo nginx -t && sudo systemctl restart nginx
             '

@@ -1,3 +1,6 @@
+# Local secrets and machine-specific config (use .env.example as a template)
+.env
+
 # Dependencies
 node_modules/
 

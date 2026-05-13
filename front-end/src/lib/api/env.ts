@@ -1,12 +1,11 @@
 /**
- * Base URL for REST (and browser fetch targets).
+ * Base URL for REST (and browser fetch targets). Prefer a single env var:
+ * **`NEXT_PUBLIC_API_BASE_URL`** (`http(s)://…`, no trailing slash).
  *
- * - **Browser:** default is same-origin **`/api/nest`** (proxied by `app/api/nest/[...path]/route.ts`).
- *   Set **`NEXT_PUBLIC_API_BASE_URL`** to a full **`http(s)://...`** URL (e.g. `https://api.example.com`)
- *   to call Nest **directly** from the browser instead of `/api/nest`. Nest **`CORS_ORIGINS`** must
- *   include your Next site origin (e.g. `https://www.example.com`).
- * - **Server (SSR / Route Handlers):** `NEXT_PUBLIC_API_BASE_URL` if set, else `API_UPSTREAM_URL`,
- *   else `http://127.0.0.1:3001`.
+ * - **Browser:** unset → same-origin **`/api/nest`**. Set the public URL to call Nest directly;
+ *   Nest **`CORS_ORIGINS`** must include your Next origin.
+ * - **Server:** `NEXT_PUBLIC_API_BASE_URL`, else optional **`API_UPSTREAM_URL`** (same URL if you split
+ *   server-only vs public), else `http://127.0.0.1:3001`.
  */
 export function getApiBaseUrl(): string {
   if (typeof window !== "undefined") {
@@ -25,14 +24,9 @@ export function getApiBaseUrl(): string {
 }
 
 /**
- * Nest HTTP(S) origin for **browser** Socket.IO only (set in `.env.local` / build env).
- * `NEXT_PUBLIC_*` is required so the value is available to client components.
- *
- * Order (first non-empty wins):
- * 1. `NEXT_PUBLIC_SOCKET_ORIGIN` — preferred
- * 2. `NEXT_PUBLIC_API_BASE_URL` — if it is a full `http(s)://` URL
- * 3. `NEXT_PUBLIC_NEST_SOCKET_ORIGIN` — legacy
- * 4. `http://localhost:3001` — local dev default
+ * Nest HTTP(S) origin for **browser** Socket.IO (cannot use the Next `/api/nest` proxy).
+ * Defaults from **`NEXT_PUBLIC_API_BASE_URL`** when set; override with `NEXT_PUBLIC_SOCKET_ORIGIN`
+ * or legacy `NEXT_PUBLIC_NEST_SOCKET_ORIGIN` if the socket host differs.
  */
 export function getSocketIoBackendOrigin(): string {
   const primary = process.env.NEXT_PUBLIC_SOCKET_ORIGIN?.trim();
