@@ -62,7 +62,7 @@ The app talks to Nest via **`NEXT_PUBLIC_API_BASE_URL`** (browser + server) or s
 
 ## Deployment
 
-Pushes to **`main`** trigger [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml): an SSH job connects to the server, runs `git pull`, `npm install`, and `npm run build` in `ann-backend/` and `front-end/`, then **`pm2 reload ann-backend`** for the API.
+Pushes and pull requests on **`production`** run CI in [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). **Only pushes** to **`production`** (not PRs) run the SSH deploy to the VPS (`git pull origin production`, `npm install`, `npm run build` in `ann-backend/` and `front-end/`, then **`pm2 reload`** for the API and frontend).
 
 Required GitHub **secrets**: `SERVER_HOST`, `SERVER_USER`, `SSH_PRIVATE_KEY`. The workflow assumes the repo lives on the server at **`/var/www/America-Needs-Nursing`** (adjust the workflow if your path differs).
 
