@@ -89,7 +89,7 @@ export default function JobApplicantsPage() {
 
   useEffect(() => {
     if (!ready) return;
-    if (!user || user.role !== "employer") {
+    if (!user || user.role !== "company") {
       router.replace("/dashboard/employee/my-jobs");
       return;
     }

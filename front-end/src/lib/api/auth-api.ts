@@ -5,7 +5,7 @@ export { getAuthClientName };
 
 export type AuthUserRole =
   | "nurse"
-  | "employer"
+  | "company"
   | "admin"
   | "content_admin"
   | "super_admin";
@@ -100,19 +100,19 @@ export function canProvisionAdminAccounts(role: AuthUserRole): boolean {
 
 export function getProfileUpdatePath(role: AuthUserRole): string {
   if (isStaffAdminAccount(role)) return "/dashboard/admin/profile";
-  if (role === "employer") return "/dashboard/employee/profile";
+  if (role === "company") return "/dashboard/employee/profile";
   return "/profile/update";
 }
 
 /** Employer-facing onboarding / company flows (staff admin included). */
 export function isEmployerLikeRole(role: AuthUserRole): boolean {
-  return role === "employer" || role === "admin";
+  return role === "company" || role === "admin";
 }
 
 /** Roles that may use `/dashboard` (sidebar app). Nurses never may. */
 export function canAccessDashboard(role: AuthUserRole): boolean {
   return (
-    role === "employer" ||
+    role === "company" ||
     role === "admin" ||
     role === "super_admin" ||
     role === "content_admin"
@@ -195,24 +195,26 @@ export type AuthUserPayload = AuthUser & { avatarUrl?: string | null };
 function coerceAuthUserRole(value: unknown): AuthUserRole {
   if (
     value === "nurse" ||
+    value === "company" ||
     value === "employer" ||
     value === "admin" ||
     value === "content_admin" ||
     value === "super_admin"
   ) {
-    return value;
+    if (value === "employer") return "company";
+    return value as AuthUserRole;
   }
   if (typeof value === "string") {
     const v = value.trim().toLowerCase();
     if (v === "nurse") return "nurse";
-    if (v === "employer") return "employer";
+    if (v === "company" || v === "employer") return "company";
     if (v === "admin") return "admin";
     if (v === "content_admin" || v === "contentadmin") return "content_admin";
     if (v === "staff_admin" || v === "staffadmin")
       return "admin";
     if (v === "super_admin" || v === "superadmin") return "super_admin";
   }
-  // Missing/unknown role: do not assume employer (would unlock dashboard by mistake)
+  // Missing/unknown role: do not assume company (would unlock dashboard by mistake)
   return "nurse";
 }
 
@@ -276,7 +278,7 @@ export type AuthResponse = {
   user: AuthUser;
 };
 
-export type RegisterRole = "nurse" | "employer";
+export type RegisterRole = "nurse" | "company";
 
 function normalizeMessage(message: string | string[] | undefined): string {
   if (!message) return "Request failed";

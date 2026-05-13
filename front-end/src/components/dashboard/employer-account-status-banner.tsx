@@ -13,7 +13,7 @@ export function EmployerAccountStatusBanner() {
   const { user, ready } = useAuth();
   const { data, isPending, isError, error } = useEmployerDashboardBootstrap();
 
-  if (!ready || user?.role !== "employer") return null;
+  if (!ready || user?.role !== "company") return null;
   if (isPending) return null;
   if (isError) {
     return (

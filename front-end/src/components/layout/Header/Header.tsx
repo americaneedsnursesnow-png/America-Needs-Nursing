@@ -123,7 +123,7 @@ export function Header() {
                   avatarSize={32}
                   align="end"
                   showDashboardLink={user.role !== "nurse"}
-                  showMessagesLink={user.role === "nurse" || user.role === "employer" || user.role === "admin"}
+                  showMessagesLink={user.role === "nurse" || user.role === "company" || user.role === "admin"}
                   messagesHref={user.role === "nurse" ? "/community/messages?tab=inbox" : "/dashboard/employee/messages"}
                   showCommunityLink={canAccessCommunity(user.role, communityOpts)}
                   communityHref={getCommunityHubPath(user.role, communityOpts)}
@@ -145,7 +145,7 @@ export function Header() {
                     avatarSize={40}
                     align="end"
                     showDashboardLink={user.role !== "nurse"}
-                    showMessagesLink={user.role === "nurse" || user.role === "employer" || user.role === "admin"}
+                    showMessagesLink={user.role === "nurse" || user.role === "company" || user.role === "admin"}
                     messagesHref={user.role === "nurse" ? "/community/messages?tab=inbox" : "/dashboard/employee/messages"}
                     showCommunityLink={canAccessCommunity(user.role, communityOpts)}
                     communityHref={getCommunityHubPath(user.role, communityOpts)}

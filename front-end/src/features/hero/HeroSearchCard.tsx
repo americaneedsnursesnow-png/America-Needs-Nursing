@@ -116,7 +116,7 @@ export function HeroSearchCard() {
             ...base,
             q: String(fd.get("q") ?? "").trim(),
             category: String(fd.get("category") ?? "").trim(),
-            employment: String(fd.get("employment") ?? "").trim(),
+            jobTitle: String(fd.get("jobTitle") ?? "").trim(),
             experience: String(fd.get("experience") ?? "").trim(),
             state: String(fd.get("state") ?? "").trim().toUpperCase(),
           };
@@ -147,12 +147,12 @@ export function HeroSearchCard() {
             name={s.category.name}
             options={s.category.options}
           />
-          <SelectField label="State" name="state" options={HERO_STATE_OPTIONS} />
           <SelectField
-            label={s.jobType.label}
-            name={s.jobType.name}
-            options={s.jobType.options}
+            label={s.discipline.label}
+            name={s.discipline.name}
+            options={s.discipline.options}
           />
+          <SelectField label="State" name="state" options={HERO_STATE_OPTIONS} />
           <SelectField
             label={s.experience.label}
             name={s.experience.name}

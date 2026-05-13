@@ -78,19 +78,19 @@ export class CompaniesController {
   }
 
   @Post()
-  @Roles(UserRole.EMPLOYER)
+  @Roles(UserRole.COMPANY)
   create(@CurrentUser() user: JwtUserPayload, @Body() dto: CreateCompanyDto) {
     return this.companiesService.createForEmployer(user, dto);
   }
 
   @Get('me')
-  @Roles(UserRole.EMPLOYER)
+  @Roles(UserRole.COMPANY)
   getMine(@CurrentUser() user: JwtUserPayload) {
     return this.companiesService.getMine(user);
   }
 
   @Patch('me')
-  @Roles(UserRole.EMPLOYER)
+  @Roles(UserRole.COMPANY)
   updateMine(
     @CurrentUser() user: JwtUserPayload,
     @Body() dto: UpdateCompanyDto,
@@ -99,7 +99,7 @@ export class CompaniesController {
   }
 
   @Post('me/logo')
-  @Roles(UserRole.EMPLOYER)
+  @Roles(UserRole.COMPANY)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
@@ -127,7 +127,7 @@ export class CompaniesController {
   }
 
   @Post('me/hero')
-  @Roles(UserRole.EMPLOYER)
+  @Roles(UserRole.COMPANY)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),

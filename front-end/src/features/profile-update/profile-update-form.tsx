@@ -183,7 +183,7 @@ function ProfileStrengthCard({ role, data, onAction }: ProfileStrengthProps) {
     try {
       const me = await getAccountMe(accessToken);
       setFullName(me.fullName || "");
-      if (user.role === "employer") {
+      if (user.role === "company") {
         try {
           const c = await getMyCompany(accessToken);
           setCompanyName(c.name || "");
@@ -291,8 +291,8 @@ function ProfileStrengthCard({ role, data, onAction }: ProfileStrengthProps) {
     e.preventDefault();
     setIsBusy(true);
     try {
-      if (user?.role === "employer" && pendingLogo) await uploadCompanyLogo(accessToken!, pendingLogo);
-      if (user?.role === "employer" && pendingHero) await uploadCompanyHero(accessToken!, pendingHero);
+      if (user?.role === "company" && pendingLogo) await uploadCompanyLogo(accessToken!, pendingLogo);
+      if (user?.role === "company" && pendingHero) await uploadCompanyHero(accessToken!, pendingHero);
       if (user?.role === "nurse" && pendingResumeFile) await uploadMyNurseResumePdf(accessToken!, pendingResumeFile);
       if (user?.role === "nurse") {
         await patchMyNurseProfile(accessToken!, {
@@ -302,7 +302,7 @@ function ProfileStrengthCard({ role, data, onAction }: ProfileStrengthProps) {
           yearsExperience: experienceYears.trim() === "" ? null : parseInt(experienceYears, 10),
           certifications: certifications.trim() || null,
         });
-      } else if (user?.role === "employer") {
+      } else if (user?.role === "company") {
         await updateMyCompany(accessToken!, {
           name: companyName, contactEmail: companyEmail, contactPhone: companyPhone,
           description: isRichTextEffectivelyEmpty(companyDescription) ? null : sanitizeJobRichHtml(companyDescription),
@@ -313,9 +313,9 @@ function ProfileStrengthCard({ role, data, onAction }: ProfileStrengthProps) {
       setIsEditing(false);
       setRefreshKey(Date.now());
       Swal.fire({ title: "Profile Updated", icon: "success", timer: 1500, showConfirmButton: false });
-      if (user?.role === "employer") {
+      if (user?.role === "company") {
         await queryClient.invalidateQueries({
-          queryKey: queryKeys.employerBootstrap(user.id),
+          queryKey: queryKeys.companyBootstrap(user.id),
         });
       }
       await loadData();
@@ -428,7 +428,7 @@ function ProfileStrengthCard({ role, data, onAction }: ProfileStrengthProps) {
                     active={activeTab === "professional"}
                     onClick={() => { setActiveTab("professional"); setIsEditing(false); }}
                     icon={<Briefcase size={20} />}
-                    label={user?.role === "employer" ? "Company Details" : "Work & License"}
+                    label={user?.role === "company" ? "Company Details" : "Work & License"}
                   />
                 )}
                 <NavItem active={activeTab === "security"} onClick={() => { setActiveTab("security"); setIsEditing(false); }} icon={<Lock size={20} />} label="Security" />

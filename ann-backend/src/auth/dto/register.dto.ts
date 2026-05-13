@@ -1,7 +1,7 @@
 import { IsEmail, IsIn, IsString, MaxLength, MinLength } from 'class-validator';
 import { UserRole } from '../../database/entities';
 
-const REGISTER_ROLES = [UserRole.NURSE, UserRole.EMPLOYER] as const;
+const REGISTER_ROLES = [UserRole.NURSE, UserRole.COMPANY] as const;
 
 export class RegisterDto {
   @IsString()

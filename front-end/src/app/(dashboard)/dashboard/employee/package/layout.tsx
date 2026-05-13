@@ -18,12 +18,12 @@ export default function PackageSegmentLayout({
 
   useEffect(() => {
     if (!ready) return;
-    if (!user || user.role !== "employer") {
+    if (!user || user.role !== "company") {
       router.replace("/dashboard");
     }
   }, [ready, user, router]);
 
-  if (!ready || !user || user.role !== "employer") {
+  if (!ready || !user || user.role !== "company") {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-gray-500">
         Redirecting…

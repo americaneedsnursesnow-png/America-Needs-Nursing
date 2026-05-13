@@ -25,7 +25,7 @@ export class JobPackagesController {
 
   /** Active packages for employers (pricing / upgrade UI). */
   @Get('catalog')
-  @Roles(UserRole.EMPLOYER)
+  @Roles(UserRole.COMPANY)
   listCatalog(@CurrentUser() user: JwtUserPayload) {
     return this.jobPackagesService.listCatalog(user.clientName);
   }

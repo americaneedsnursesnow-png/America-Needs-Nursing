@@ -49,13 +49,13 @@ export default function SubmitJobPage() {
   const { user, accessToken, ready } = useAuth();
   const employerBootstrap = useEmployerDashboardBootstrap();
   const company =
-    user?.role === "employer" ? employerBootstrap.data?.company ?? null : null;
+    user?.role === "company" ? employerBootstrap.data?.company ?? null : null;
   const companyError =
-    user?.role === "employer" && employerBootstrap.isError
+    user?.role === "company" && employerBootstrap.isError
       ? "Could not load company."
       : null;
   const employerCompanyBanner =
-    user?.role === "employer" && !employerBootstrap.isPending
+    user?.role === "company" && !employerBootstrap.isPending
       ? companyError ||
         (!company ? "Complete your company profile first to post jobs." : null)
       : null;
@@ -91,7 +91,7 @@ export default function SubmitJobPage() {
     try {
       await uploadCompanyLogo(accessToken, file);
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.employerBootstrap(user.id),
+        queryKey: queryKeys.companyBootstrap(user.id),
       });
     } catch (e) {
       setFormError("Logo upload failed.");
@@ -106,7 +106,7 @@ export default function SubmitJobPage() {
     try {
       await uploadCompanyHero(accessToken, file);
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.employerBootstrap(user.id),
+        queryKey: queryKeys.companyBootstrap(user.id),
       });
     } catch (e) {
       setFormError("Hero image upload failed.");
@@ -165,7 +165,7 @@ export default function SubmitJobPage() {
     );
   }
 
-  if (user.role === "employer" && employerBootstrap.isPending) {
+  if (user.role === "company" && employerBootstrap.isPending) {
     return (
       <div className="min-h-screen bg-[#FDFDFD] px-6 py-16">
         <div className="mx-auto max-w-3xl animate-pulse space-y-6">

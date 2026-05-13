@@ -47,7 +47,7 @@ export class NewsletterBroadcastMailProcessor extends WorkerHost {
     const users = await this.usersRepository.find({
       where: {
         clientName,
-        role: In([UserRole.NURSE, UserRole.EMPLOYER]),
+        role: In([UserRole.NURSE, UserRole.COMPANY]),
       },
       select: ['email'],
     });

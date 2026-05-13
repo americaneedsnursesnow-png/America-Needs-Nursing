@@ -63,7 +63,7 @@ export default function SignUpPage() {
 
     setSubmitting(true);
     try {
-      const role = roleUi === "seeker" ? "nurse" : "employer";
+      const role = roleUi === "seeker" ? "nurse" : "company";
       const tempUserData = { email: email.trim(), password, role };
       sessionStorage.setItem("temp_reg_data", JSON.stringify(tempUserData));
       router.push("/register-details");
@@ -203,7 +203,7 @@ export default function SignUpPage() {
                   }`}
                 >
                   <UserPlusIcon className="h-5 w-5" />
-                  <span className="text-[10px] font-bold">EMPLOYER</span>
+                  <span className="text-[10px] font-bold">COMPANY</span>
                 </button>
               </div>
             </div>

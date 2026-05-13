@@ -120,7 +120,7 @@ export class JobMessagingGateway
         return;
       }
 
-      if (user.role !== UserRole.NURSE && user.role !== UserRole.EMPLOYER) {
+      if (user.role !== UserRole.NURSE && user.role !== UserRole.COMPANY) {
         client.disconnect(true);
         return;
       }

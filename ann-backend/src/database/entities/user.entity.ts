@@ -8,9 +8,9 @@ import {
 
 export enum UserRole {
   NURSE = 'nurse',
-  EMPLOYER = 'employer',
+  COMPANY = 'company',
   ADMIN = 'admin',
-  /** Newsletter + blog CMS only (no employer ops, packages, or directory). */
+  /** Newsletter + blog CMS only (no company hiring ops, packages, or directory). */
   CONTENT_ADMIN = 'content_admin',
   SUPER_ADMIN = 'super_admin',
 }

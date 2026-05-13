@@ -14,10 +14,10 @@ const STALE_MS = 2 * 60_000;
 export function useEmployerDashboardBootstrap() {
   const { accessToken, user, ready } = useAuth();
   const enabled =
-    ready && Boolean(accessToken) && user?.role === "employer";
+    ready && Boolean(accessToken) && user?.role === "company";
 
   return useQuery({
-    queryKey: queryKeys.employerBootstrap(user?.id),
+    queryKey: queryKeys.companyBootstrap(user?.id),
     queryFn: () => fetchEmployerBootstrap(accessToken!),
     enabled,
     staleTime: STALE_MS,

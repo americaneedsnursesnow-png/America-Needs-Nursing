@@ -98,7 +98,7 @@ export function NurseJobMessagesPanel({
   const { user } = useAuth();
   const showCommunitySidebar =
     includeCommunityChat &&
-    canAccessCommunity(user?.role ?? "employer", {
+    canAccessCommunity(user?.role ?? "nurse", {
       communityBannedAt: user?.communityBannedAt,
     });
   const [threads, setThreads] = useState<ThreadRow[]>([]);

@@ -122,8 +122,8 @@ export function FooterColumns({
         <BrandBlock />
 
         <LinkColumn
-          title={footerColumns.forClients.title}
-          links={footerColumns.forClients.links}
+          title={footerColumns.explore.title}
+          links={footerColumns.explore.links}
         />
 
         <LinkColumn
@@ -132,8 +132,8 @@ export function FooterColumns({
         />
 
         <LinkColumn
-          title={footerColumns.resources.title}
-          links={footerColumns.resources.links}
+          title={footerColumns.account.title}
+          links={footerColumns.account.links}
         />
       </div>
       </SiteContentWrapper>

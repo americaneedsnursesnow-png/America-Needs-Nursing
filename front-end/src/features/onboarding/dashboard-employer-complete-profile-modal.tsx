@@ -33,7 +33,7 @@ export function DashboardEmployerCompleteProfileModal() {
 
   const shouldRun = useMemo(() => {
     if (!ready || !user) return false;
-    if (user.role !== "employer") return false;
+    if (user.role !== "company") return false;
     if (!pathname.startsWith("/dashboard")) return false;
     if (pathname.startsWith("/dashboard/employee/profile")) return false;
     return true;
@@ -65,7 +65,7 @@ export function DashboardEmployerCompleteProfileModal() {
     setOpen(!complete);
   }, [shouldRun, data, isPending, isError]);
 
-  if (!open || !user || user.role !== "employer") return null;
+  if (!open || !user || user.role !== "company") return null;
 
   return (
     <div

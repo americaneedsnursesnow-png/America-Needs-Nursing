@@ -25,7 +25,7 @@ export class EmployerBootstrapService {
   ) {}
 
   async get(payload: JwtUserPayload): Promise<EmployerBootstrapResponse> {
-    if (payload.role !== UserRole.EMPLOYER) {
+    if (payload.role !== UserRole.COMPANY) {
       throw new ForbiddenException('Employer role required');
     }
 

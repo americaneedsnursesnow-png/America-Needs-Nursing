@@ -45,7 +45,7 @@ export class JobsService {
   ) {}
 
   async create(user: JwtUserPayload, dto: CreateJobDto): Promise<Job> {
-    if (user.role !== UserRole.EMPLOYER) {
+    if (user.role !== UserRole.COMPANY) {
       throw new ForbiddenException();
     }
     const company = await this.companiesService.findEmployerCompanyOrThrow(
@@ -85,7 +85,7 @@ export class JobsService {
   }
 
   async listMine(user: JwtUserPayload): Promise<Job[]> {
-    if (user.role !== UserRole.EMPLOYER) {
+    if (user.role !== UserRole.COMPANY) {
       throw new ForbiddenException();
     }
     const company = await this.companiesService.findEmployerCompanyOrThrow(
@@ -117,7 +117,7 @@ export class JobsService {
    * are removed by DB `ON DELETE CASCADE` where applicable.
    */
   async deleteMine(user: JwtUserPayload, jobId: string): Promise<void> {
-    if (user.role !== UserRole.EMPLOYER) {
+    if (user.role !== UserRole.COMPANY) {
       throw new ForbiddenException();
     }
     const job = await this.getEmployerJob(user, jobId);

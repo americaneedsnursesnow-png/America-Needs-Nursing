@@ -114,7 +114,7 @@ export class ApplicationsService {
       };
     }>
   > {
-    if (user.role !== UserRole.EMPLOYER) {
+    if (user.role !== UserRole.COMPANY) {
       throw new ForbiddenException();
     }
     const job = await this.jobsService.getEmployerJob(user, jobId);
@@ -164,7 +164,7 @@ export class ApplicationsService {
     stream: ReturnType<typeof createReadStream>;
     filename: string;
   }> {
-    if (user.role !== UserRole.EMPLOYER) {
+    if (user.role !== UserRole.COMPANY) {
       throw new ForbiddenException();
     }
     const application = await this.applicationsRepository.findOne({
@@ -186,7 +186,7 @@ export class ApplicationsService {
     applicationId: string,
     dto: UpdateApplicationStatusDto,
   ): Promise<JobApplication> {
-    if (user.role !== UserRole.EMPLOYER) {
+    if (user.role !== UserRole.COMPANY) {
       throw new ForbiddenException();
     }
     const application = await this.applicationsRepository.findOne({
@@ -227,7 +227,7 @@ export class ApplicationsService {
     const isNurse =
       user.role === UserRole.NURSE && application.nurseUserId === user.sub;
     const isEmployer =
-      user.role === UserRole.EMPLOYER &&
+      user.role === UserRole.COMPANY &&
       application.job.company.employerUserId === user.sub;
     if (!isNurse && !isEmployer) {
       throw new ForbiddenException();

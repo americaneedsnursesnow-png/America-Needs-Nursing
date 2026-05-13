@@ -9,6 +9,7 @@ export type MainNavItem = {
 export const mainNav: readonly MainNavItem[] = [
   { label: "Home", href: "/" },
   { label: "Browse Jobs", href: "/jobs" },
+  { label: "Search jobs by state", href: "/jobs/locations" },
   { label: "Healthcare listing", href: "/companies" },
   { label: "Blogs", href: "/blog" },
 ];

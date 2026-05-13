@@ -95,7 +95,7 @@ export class MessagingService {
         return [];
       }
     }
-    if (user.role === UserRole.EMPLOYER) {
+    if (user.role === UserRole.COMPANY) {
       if (!applicationAllowsEmployerMessaging(application.status)) {
         return [];
       }
@@ -194,7 +194,7 @@ export class MessagingService {
   async listThreadsForUser(
     user: JwtUserPayload,
   ): Promise<Array<{ applicationId: string; lastMessageAt: Date | null }>> {
-    if (user.role !== UserRole.NURSE && user.role !== UserRole.EMPLOYER) {
+    if (user.role !== UserRole.NURSE && user.role !== UserRole.COMPANY) {
       return [];
     }
 
@@ -231,7 +231,7 @@ export class MessagingService {
           continue;
         }
       }
-      if (user.role === UserRole.EMPLOYER) {
+      if (user.role === UserRole.COMPANY) {
         if (!applicationAllowsEmployerMessaging(a.status)) {
           continue;
         }
