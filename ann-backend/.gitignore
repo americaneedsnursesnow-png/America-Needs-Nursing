@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Local secrets and machine-specific config (use .env.example as a template)
+=======
+# Local secrets (copy from .env.example)
+>>>>>>> effc6c5 (Update environment configuration and documentation: clarify local development settings in .env files, adjust CORS origins for local Next.js server, and enhance README instructions for setting up environment variables. Update .gitignore to include local .env files for better security practices.)
 .env
 
 # Dependencies
