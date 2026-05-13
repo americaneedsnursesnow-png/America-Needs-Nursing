@@ -3,7 +3,9 @@ name: CI verify and deploy
 on:
   push:
     branches: [production]
+    branches: [production]
   pull_request:
+    branches: [production]
     branches: [production]
 
 jobs:
@@ -33,6 +35,7 @@ jobs:
 
   deploy:
     needs: verify
+    # VPS deploy only on push to `production` (not on pull_request).
     if: github.event_name == 'push' && github.ref == 'refs/heads/production'
     runs-on: ubuntu-latest
     steps:
@@ -63,6 +66,7 @@ jobs:
               cd ann-backend
               git reset --hard
               git pull origin production
+              git pull origin production
               npm install
               npm run build
               npm run verify:build
@@ -72,6 +76,7 @@ jobs:
               # ================= FRONTEND =================
               cd ../front-end
               git reset --hard
+              git pull origin production
               git pull origin production
               npm install
               npm run build
