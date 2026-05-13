@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
+  LayoutGrid,
   Briefcase,
   PlusCircle,
   Package,
@@ -47,10 +48,17 @@ type MenuItem = {
 const menuItems: MenuItem[] = [
   {
     id: "dashboard",
-    label: "Dashboard",
+    label: "User Dashboard",
     path: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["nurse", "company", "admin", "super_admin", "content_admin"],
+    roles: ["nurse", "company"],
+  },
+  {
+    id: "admin-hub",
+    label: "Admin dashboard",
+    path: "/dashboard/admin",
+    icon: LayoutGrid,
+    roles: ["super_admin", "admin", "content_admin"],
   },
   { id: "change-profile", label: "Change profile", path: "/profile/update", icon: UserPen, roles: ["nurse", "company", "admin", "super_admin", "content_admin"] },
   { id: "community", label: "Community", path: "/community", icon: Users, roles: ["nurse", "super_admin"] },

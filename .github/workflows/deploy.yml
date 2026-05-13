@@ -3,9 +3,7 @@ name: CI verify and deploy
 on:
   push:
     branches: [production]
-    branches: [production]
   pull_request:
-    branches: [production]
     branches: [production]
 
 jobs:
@@ -66,7 +64,6 @@ jobs:
               cd ann-backend
               git reset --hard
               git pull origin production
-              git pull origin production
               npm install
               npm run build
               npm run verify:build
@@ -77,7 +74,6 @@ jobs:
               cd ../front-end
               git reset --hard
               git pull origin production
-              git pull origin production
               npm install
               npm run build
               npm run verify:build
@@ -85,6 +81,5 @@ jobs:
 
               pm2 save
 
-              # ================= NGINX =================
-              sudo nginx -t && sudo systemctl restart nginx
+              sudo nginx -t && sudo systemctl reload nginx
             '
