@@ -91,7 +91,7 @@ async function latestIncomingJobMessageMs(
   role: string,
   afterMs: number,
 ): Promise<number> {
-  if (role !== "nurse" && role !== "employer" && role !== "admin") return 0;
+  if (role !== "nurse" && role !== "company" && role !== "admin") return 0;
   let max = 0;
   try {
     const threads = await listMessagingThreads(token);
@@ -203,7 +203,7 @@ function CommunityHubUnreadProviderInner({
           user?.id &&
           accessToken &&
           (user.role === "nurse" ||
-            user.role === "employer" ||
+            user.role === "company" ||
             user.role === "admin"),
       ),
     [ready, user?.id, accessToken, user?.role],

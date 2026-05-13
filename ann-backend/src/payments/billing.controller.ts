@@ -14,7 +14,7 @@ export class BillingController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Post('stripe/checkout-session')
-  @Roles(UserRole.EMPLOYER)
+  @Roles(UserRole.COMPANY)
   createCheckoutSession(
     @CurrentUser() user: JwtUserPayload,
     @Body() dto: CreateCheckoutSessionDto,

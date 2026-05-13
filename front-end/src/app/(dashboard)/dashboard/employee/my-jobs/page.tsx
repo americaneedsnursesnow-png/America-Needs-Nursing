@@ -32,7 +32,7 @@ async function loadPrefetch(
       jobs,
       token,
     );
-    return { kind: "employer", jobs, applicantCountByJobId };
+    return { kind: "company", jobs, applicantCountByJobId };
   } catch {
     try {
       const [applications, saved] = await Promise.all([

@@ -81,7 +81,7 @@ function MessagesPageInner() {
     }, []);
 
   const loadThreads = useCallback(async () => {
-    if (!accessToken || !user || user.role !== "employer") return;
+    if (!accessToken || !user || user.role !== "company") return;
     setLoadingThreads(true);
     try {
       const raw = await listMessagingThreads(accessToken);
@@ -98,17 +98,17 @@ function MessagesPageInner() {
   useEffect(() => {
     if (!ready) return;
     if (!user) { router.replace("/sign-in?next=/dashboard/employee/messages"); return; }
-    if (user.role === "employer") void loadThreads();
+    if (user.role === "company") void loadThreads();
   }, [ready, user, router, loadThreads]);
 
   useEffect(() => {
-    if (user?.role !== "employer") return;
+    if (user?.role !== "company") return;
     const id = applicationIdFromUrl?.trim();
     if (!id) return;
     setActiveApplicationId(id);
   }, [user?.role, applicationIdFromUrl]);
 
-  useThreadMessagesRealtime(accessToken, user?.role === "employer" ? activeApplicationId : null, user?.role === "employer", setMessages, setLoadingMessages);
+  useThreadMessagesRealtime(accessToken, user?.role === "company" ? activeApplicationId : null, user?.role === "company", setMessages, setLoadingMessages);
 
   async function handleSend(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();

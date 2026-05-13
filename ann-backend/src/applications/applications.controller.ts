@@ -41,7 +41,7 @@ export class ApplicationsController {
   }
 
   @Get('jobs/:jobId')
-  @Roles(UserRole.EMPLOYER)
+  @Roles(UserRole.COMPANY)
   listForJob(
     @CurrentUser() user: JwtUserPayload,
     @Param('jobId', ParseUUIDPipe) jobId: string,
@@ -50,7 +50,7 @@ export class ApplicationsController {
   }
 
   @Get(':id/nurse-resume')
-  @Roles(UserRole.EMPLOYER)
+  @Roles(UserRole.COMPANY)
   async downloadNurseResume(
     @CurrentUser() user: JwtUserPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -64,7 +64,7 @@ export class ApplicationsController {
   }
 
   @Patch(':id/status')
-  @Roles(UserRole.EMPLOYER)
+  @Roles(UserRole.COMPANY)
   updateStatus(
     @CurrentUser() user: JwtUserPayload,
     @Param('id', ParseUUIDPipe) id: string,

@@ -1,3 +1,5 @@
+import { JOB_TITLE_FILTER_OPTIONS } from "@/lib/job-posting-metadata";
+
 /**
  * Home hero — copy, image, stats, and job search card fields.
  * Image: `public/hero/images.jpg` → `/hero/images.jpg`
@@ -39,17 +41,11 @@ export const heroContent = {
           { value: "Administration", label: "Administration" },
         ],
       },
-      jobType: {
-        label: "Job Type",
-        name: "employment" as const,
-        options: [
-          { value: "", label: "All types" },
-          { value: "full_time", label: "Full time" },
-          { value: "part_time", label: "Part time" },
-          { value: "contract", label: "Contract" },
-          { value: "per_diem", label: "Per diem" },
-          { value: "temporary", label: "Temporary / travel" },
-        ],
+      discipline: {
+        label: "Discipline",
+        name: "jobTitle" as const,
+        /** RN, LPN, CNA, NP, PA — matches `/jobs` sidebar & URL `jobTitle`. */
+        options: [...JOB_TITLE_FILTER_OPTIONS],
       },
       experience: {
         label: "Experience",

@@ -20,11 +20,13 @@ export function readJwtRole(token: string): AuthUserRole | null {
     const r = json.role;
     if (
       r === "nurse" ||
+      r === "company" ||
       r === "employer" ||
       r === "admin" ||
       r === "content_admin" ||
       r === "super_admin"
     ) {
+      if (r === "employer") return "company";
       return r;
     }
     return null;

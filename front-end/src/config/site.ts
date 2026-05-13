@@ -17,70 +17,64 @@ export const siteConfig = {
     width: 450,
     height: 300,
   },
-  address: "Collins Street West, Victoria Near Bank Road Australia QHR12456.",
-  copyright: "© copyright 2026 by rizitech ",
-  
+  address:
+    "America Needs Nurses — nationwide nursing jobs & employer listings. United States.",
+  /** Footer credit: linked brand name. */
+  copyrightBrand: "Arrowhead",
+  copyrightBrandUrl: "https://arrowheaddigitech.com",
   subscribe: {
     title: "Subscribe to our newsletter",
     description:
-      "At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.",
-    placeholder: "Enter Your email",
+      "Get hiring tips, featured roles, and nurse career resources in your inbox.",
+    placeholder: "Enter your email",
     button: "Subscribe",
   },
   footerColumns: {
-    forClients: {
-      title: "For Clients",
+    explore: {
+      title: "Explore",
       links: [
-        { label: "Talent Marketplace", href: "/clients/talent" },
-        { label: "Payroll Services", href: "/clients/payroll" },
-        { label: "Direct Contracts", href: "/clients/contracts" },
-        { label: "Hire Worldwide", href: "/clients/worldwide" },
-        { label: "Hire in the USA", href: "/clients/usa" },
-        { label: "How to Hire", href: "/clients/how-to-hire" },
-      ],
-    },
-    resources: {
-      title: "Our Resources",
-      links: [
-        { label: "Free Business tools", href: "/resources/tools" },
-        { label: "Affiliate Program", href: "/resources/affiliate" },
-        { label: "Success Stories", href: "/resources/stories" },
-        { label: "Upwork Reviews", href: "/resources/reviews" },
-        { label: "Resources", href: "/resources" },
-        { label: "Help & Support", href: "/support" },
+        { label: "Home", href: "/" },
+        { label: "Browse jobs", href: "/jobs" },
+        { label: "Search jobs by state", href: "/jobs/locations" },
+        { label: "Healthcare employers", href: "/companies" },
+        { label: "Blog", href: "/blog" },
+        { label: "About", href: "/about" },
       ],
     },
     jobCategories: {
-      title: "Job categories",
-      /** `category` values align with hero search & client-side job browse filters. */
+      title: "Shop by discipline",
+      /** `jobTitle` query matches RN, LPN, CNA, NP, PA filters on `/jobs`. */
       links: [
         { label: "Jobs by state", href: "/jobs/locations" },
+        { label: "RN roles", href: "/jobs?jobTitle=RN" },
+        { label: "LPN / LVN", href: "/jobs?jobTitle=LPN" },
+        { label: "CNA roles", href: "/jobs?jobTitle=CNA" },
+        { label: "NP roles", href: "/jobs?jobTitle=NP" },
+        { label: "PA roles", href: "/jobs?jobTitle=PA" },
         { label: "Critical care (ICU)", href: "/jobs?category=Critical%20care" },
         { label: "Emergency (ED)", href: "/jobs?category=Emergency" },
-        { label: "Med-Surg", href: "/jobs?category=Med-Surg" },
-        { label: "Operating room (OR)", href: "/jobs?category=Operating%20room" },
-        { label: "Pediatrics", href: "/jobs?category=Pediatrics" },
-        { label: "Home health", href: "/jobs?category=Home%20health" },
-        { label: "Case management", href: "/jobs?category=Case%20management" },
-        { label: "Administration", href: "/jobs?category=Administration" },
+      ],
+    },
+    account: {
+      title: "Account & community",
+      links: [
+        { label: "Sign in", href: "/sign-in" },
+        { label: "Register", href: "/register" },
+        { label: "Community", href: "/community" },
       ],
     },
   },
-  /**
-   * Footer / social: push `{ label, href }` rows when marketing shares final URLs.
-   * Icons can be wired in `FooterColumns` once this list is non-empty.
-   */
   stats: [
-    { value: "12K", label: "Job Posted" },
-    { value: "10M", label: "Happy Customers" },
-    { value: "76K", label: "Freelancers" },
-    { value: "200+", label: "Companies" },
+    { value: "50+", label: "States covered" },
+    { value: "24/7", label: "Job search" },
+    { value: "100%", label: "Nursing focus" },
+    { value: "1", label: "Mission: nurses first" },
   ],
+  /** Only networks with a public profile URL (icons rendered in FooterColumns). */
   socials: [
     { label: "Facebook", href: "https://www.facebook.com/americaneednurses", icon: "facebook" },
     { label: "Instagram", href: "https://www.instagram.com/america.needsnurses/", icon: "instagram" },
     { label: "TikTok", href: "https://www.tiktok.com/@america.needs.nurses", icon: "tiktok" },
-    { label: "Substack", href: "https://americaneedsnurses.substack.com/publish/home", icon: "substack" },
     { label: "YouTube", href: "https://www.youtube.com/@AmericaNeedsnurses", icon: "youtube" },
-  ]
+  ],
 } as const;

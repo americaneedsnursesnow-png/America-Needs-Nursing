@@ -70,6 +70,7 @@ jobs:
               npm install
               npm run build
               npm run verify:build
+              npm run migration:run
               pm2 reload ann-backend || pm2 start npm --name ann-backend -- start
 
               # ================= FRONTEND =================
@@ -84,6 +85,5 @@ jobs:
 
               pm2 save
 
-              # ================= NGINX =================
-              sudo nginx -t && sudo systemctl restart nginx
+              sudo nginx -t && sudo systemctl reload nginx
             '

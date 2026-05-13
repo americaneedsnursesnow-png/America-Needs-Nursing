@@ -55,7 +55,7 @@ export const JOB_BROWSE_SALARY_OPTIONS = EXPECTED_SALARY_RANGE_OPTIONS.filter(
   (o) => o.value !== "",
 );
 
-/** Browse filter: match shorthand role tokens against job titles. */
+/** Browse filter: match discipline tokens (RN, LPN, CNA, …) against job titles. */
 export const JOB_TITLE_FILTER_OPTIONS: ReadonlyArray<{
   value: string;
   label: string;

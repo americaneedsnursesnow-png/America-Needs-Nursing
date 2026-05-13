@@ -36,7 +36,7 @@ import {
 
 export type MyJobsServerPrefetch =
   | {
-      kind: "employer";
+      kind: "company";
       jobs: EmployerJob[];
       applicantCountByJobId: Record<string, number>;
     }
@@ -103,7 +103,7 @@ export default function MyJobsPageClient({
   });
 
   const employerQuery = useQuery({
-    queryKey: ["my-jobs", "employer", accessToken],
+    queryKey: ["my-jobs", "company", accessToken],
     queryFn: async () => {
       const jobs = await listEmployerJobs(accessToken!);
       const applicantCountByJobId = await buildEmployerApplicantCountMap(
@@ -114,7 +114,7 @@ export default function MyJobsPageClient({
     },
     enabled: ready && !!accessToken && !isNurseUser,
     initialData:
-      prefetch?.kind === "employer"
+      prefetch?.kind === "company"
         ? {
             jobs: prefetch.jobs,
             applicantCountByJobId: prefetch.applicantCountByJobId,
@@ -152,7 +152,7 @@ export default function MyJobsPageClient({
     try {
       await updateEmployerJob(accessToken, jobId, { status });
       await queryClient.invalidateQueries({
-        queryKey: ["my-jobs", "employer", accessToken],
+        queryKey: ["my-jobs", "company", accessToken],
       });
     } catch (e) {
       if (e instanceof BackendRequestError) {
@@ -175,7 +175,7 @@ export default function MyJobsPageClient({
     try {
       await deleteEmployerJob(accessToken, job.id);
       await queryClient.invalidateQueries({
-        queryKey: ["my-jobs", "employer", accessToken],
+        queryKey: ["my-jobs", "company", accessToken],
       });
     } catch {
       setError("Could not delete this job.");
@@ -218,13 +218,13 @@ export default function MyJobsPageClient({
             My Jobs
           </h1>
           <p className="mt-2 text-lg font-medium text-gray-500">
-            {String(user?.role) === "employer"
+            {String(user?.role) === "company"
               ? "Manage your active listings and track candidate progress."
               : "Keep track of your applications and saved opportunities."}
           </p>
         </div>
 
-        {String(user?.role) === "employer" && (
+        {String(user?.role) === "company" && (
           <div className="flex shrink-0">
             <Link
               href="./submit-job"

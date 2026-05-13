@@ -47,7 +47,7 @@ type MenuItem = {
 };
 
 const menuItems: MenuItem[] = [
-  { id: "dashboard", label: "User Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["nurse", "employer"] },
+  { id: "dashboard", label: "User Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["nurse", "company"] },
   {
     id: "admin-hub",
     label: "Admin dashboard",
@@ -55,12 +55,12 @@ const menuItems: MenuItem[] = [
     icon: LayoutGrid,
     roles: ["super_admin", "admin", "content_admin"],
   },
-  { id: "change-profile", label: "Change profile", path: "/profile/update", icon: UserPen, roles: ["nurse", "employer", "admin", "super_admin", "content_admin"] },
+  { id: "change-profile", label: "Change profile", path: "/profile/update", icon: UserPen, roles: ["nurse", "company", "admin", "super_admin", "content_admin"] },
   { id: "community", label: "Community", path: "/community", icon: Users, roles: ["nurse", "super_admin"] },
-  { id: "my-jobs", label: "My Jobs", path: "/dashboard/employee/my-jobs", icon: Briefcase, roles: ["nurse", "employer", "admin"] },
-  { id: "submit-job", label: "Create Jobs", path: "/dashboard/employee/submit-job", icon: PlusCircle, roles: ["nurse", "employer", "admin"] },
-  { id: "package", label: "Plans", path: "/dashboard/employee/package", icon: Package, roles: ["employer"] },
-  { id: "messages", label: "Inbox", path: "/dashboard/employee/messages", icon: MessageSquare, roles: ["nurse", "employer", "admin"] },
+  { id: "my-jobs", label: "My Jobs", path: "/dashboard/employee/my-jobs", icon: Briefcase, roles: ["nurse", "company", "admin"] },
+  { id: "submit-job", label: "Create Jobs", path: "/dashboard/employee/submit-job", icon: PlusCircle, roles: ["nurse", "company", "admin"] },
+  { id: "package", label: "Plans", path: "/dashboard/employee/package", icon: Package, roles: ["company"] },
+  { id: "messages", label: "Inbox", path: "/dashboard/employee/messages", icon: MessageSquare, roles: ["nurse", "company", "admin"] },
   { id: "blog-write", label: "Blog Write", path: "/dashboard/admin/blogs-write", icon: SquarePen, roles: ["super_admin", "admin", "content_admin"] },
   { id: "newsletter", label: "Newsletter", path: "/dashboard/admin/newsletter", icon: Mail, roles: ["super_admin", "admin", "content_admin"] },
   { id: "tier-edit", label: "Job plans", path: "/dashboard/admin/edit-tiers", icon: Layers, roles: ["super_admin", "admin"] },
@@ -76,7 +76,7 @@ function roleLabel(role: AuthUserRole): string {
     super_admin: "Super admin",
     admin: "Admin",
     content_admin: "Content admin",
-    employer: "Employer",
+    company: "Company",
     nurse: "Nurse",
   };
   return labels[role] || role;

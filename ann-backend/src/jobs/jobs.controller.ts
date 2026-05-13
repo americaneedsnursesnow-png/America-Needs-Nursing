@@ -27,19 +27,19 @@ export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
   @Post()
-  @Roles(UserRole.EMPLOYER)
+  @Roles(UserRole.COMPANY)
   create(@CurrentUser() user: JwtUserPayload, @Body() dto: CreateJobDto) {
     return this.jobsService.create(user, dto);
   }
 
   @Get('mine')
-  @Roles(UserRole.EMPLOYER)
+  @Roles(UserRole.COMPANY)
   listMine(@CurrentUser() user: JwtUserPayload) {
     return this.jobsService.listMine(user);
   }
 
   @Get('mine/:id')
-  @Roles(UserRole.EMPLOYER)
+  @Roles(UserRole.COMPANY)
   getMine(
     @CurrentUser() user: JwtUserPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -48,7 +48,7 @@ export class JobsController {
   }
 
   @Patch('mine/:id')
-  @Roles(UserRole.EMPLOYER)
+  @Roles(UserRole.COMPANY)
   update(
     @CurrentUser() user: JwtUserPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -59,7 +59,7 @@ export class JobsController {
 
   @Delete('mine/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(UserRole.EMPLOYER)
+  @Roles(UserRole.COMPANY)
   deleteMine(
     @CurrentUser() user: JwtUserPayload,
     @Param('id', ParseUUIDPipe) id: string,

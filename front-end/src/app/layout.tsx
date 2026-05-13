@@ -19,7 +19,8 @@ export const metadata: Metadata = {
   },
   description: "Find jobs and hire talent.",
   icons: {
-    icon: "/logo/ANN.png",
+    icon: [{ url: "/favicon/favicon-ann.jpeg", type: "image/jpeg" }],
+    shortcut: [{ url: "/favicon/favicon-ann.jpeg", type: "image/jpeg" }],
     apple: "/logo/ANN.png",
   },
 };

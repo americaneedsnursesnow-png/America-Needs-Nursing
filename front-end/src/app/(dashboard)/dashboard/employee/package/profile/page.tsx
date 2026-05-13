@@ -176,7 +176,7 @@ function EmployerPackageProfileInner() {
       }
       if (cancelled) return;
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.employerBootstrap(user.id),
+        queryKey: queryKeys.companyBootstrap(user.id),
       });
     })();
     return () => {

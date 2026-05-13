@@ -68,7 +68,7 @@ export class CompaniesService {
     user: JwtUserPayload,
     dto: CreateCompanyDto,
   ): Promise<Company> {
-    if (user.role !== UserRole.EMPLOYER) {
+    if (user.role !== UserRole.COMPANY) {
       throw new ForbiddenException('Only employers can create a company');
     }
 
@@ -109,7 +109,7 @@ export class CompaniesService {
   async getMine(
     user: JwtUserPayload,
   ): Promise<Company & { freeTierJobPostsPerMonth: number }> {
-    if (user.role !== UserRole.EMPLOYER) {
+    if (user.role !== UserRole.COMPANY) {
       throw new ForbiddenException();
     }
     const company = await this.companiesRepository.findOne({
@@ -130,7 +130,7 @@ export class CompaniesService {
   async getMineOrNull(
     user: JwtUserPayload,
   ): Promise<(Company & { freeTierJobPostsPerMonth: number }) | null> {
-    if (user.role !== UserRole.EMPLOYER) {
+    if (user.role !== UserRole.COMPANY) {
       return null;
     }
     const company = await this.companiesRepository.findOne({
@@ -556,7 +556,7 @@ export class CompaniesService {
     kind: 'logos' | 'heroes',
     field: 'logoUrl' | 'heroImageUrl',
   ): Promise<{ url: string }> {
-    if (user.role !== UserRole.EMPLOYER) {
+    if (user.role !== UserRole.COMPANY) {
       throw new ForbiddenException();
     }
     if (!file?.buffer?.length) {

@@ -248,7 +248,7 @@ export default function AdminUserDirectoryPage() {
         c.employerUserId,
         c.employer?.email ?? "",
         c.employer?.fullName ?? "",
-        c.employer?.role ?? "employer",
+        c.employer?.role ?? "company",
         c.employer?.createdAt ?? "",
         c.createdAt,
         c.updatedAt,

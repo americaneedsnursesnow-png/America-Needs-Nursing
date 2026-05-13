@@ -15,6 +15,7 @@ import {
   MapPin,
   ChevronRight,
   DollarSign,
+  Stethoscope,
 } from "lucide-react";
 
 import { PublicPagination } from "@/components/public/public-pagination";
@@ -24,13 +25,11 @@ import type { JobMapMarker } from "@/lib/api/public-api";
 import type { PaginatedMeta, PublicJob } from "@/lib/api/types";
 import { heroContent } from "@/features/hero/content";
 import {
-  EMPLOYMENT_TYPE_OPTIONS,
   JOB_BROWSE_SALARY_OPTIONS,
   JOB_TITLE_FILTER_OPTIONS,
   jobListingMetaLine,
   jobRoleDetailEntries,
   jobTitleFilterMatches,
-  type JobEmploymentType,
 } from "@/lib/job-posting-metadata";
 import { blogCoverSrc } from "@/lib/blog-cover-image";
 import { US_STATES, usStateByCode } from "@/lib/us-states";
@@ -108,15 +107,12 @@ export function JobsBrowseWithFilters({
     router.replace(`/jobs${buildJobBrowseSearchParams(next, page)}`, { scroll: false });
   }, [router]);
 
-  const employmentType = (filters.employment || "") as JobEmploymentType | "";
-
   const filtered = useMemo(() => {
     const q = normalize(filters.q);
     const cat = normalize(filters.category);
     const salary = filters.salary.trim();
     const jt = filters.jobTitle.trim();
     return jobs.filter((job) => {
-      if (employmentType && job.employmentType !== employmentType) return false;
       if (salary && (job.expectedSalaryRange ?? "") !== salary) return false;
       if (!jobTitleFilterMatches(job.title, jt)) return false;
       if (!jobMatchesState(job, filters.state)) return false;
@@ -129,7 +125,7 @@ export function JobsBrowseWithFilters({
       const hay = [job.title, job.company?.name ?? "", job.jobCategory ?? "", job.location ?? "", job.description ?? ""].join(" ").toLowerCase();
       return hay.includes(q);
     });
-  }, [jobs, filters, employmentType]);
+  }, [jobs, filters]);
 
   const hasActiveFilters = Object.values(filters).some((v) => v !== "");
 
@@ -220,25 +216,21 @@ const footerCategoryLinks = existingCategoryNames
             </div>
           </FilterSection>
 
-          {/* Job Type - Open List */}
-          <FilterSection title="Job Type" icon={Clock}>
-            <div className="flex flex-col gap-1 mt-2">
-              <button
-                onClick={() => { const next = { ...filters, employment: "" }; setFilters(next); pushUrl(next, 1); }}
-                className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                  !employmentType ? 'bg-red-50 text-red-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                All Types
-              </button>
-              {EMPLOYMENT_TYPE_OPTIONS.map((o) => (
+          <FilterSection title="Discipline" icon={Stethoscope}>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {JOB_TITLE_FILTER_OPTIONS.map((o) => (
                 <button
-                  key={o.value}
-                  onClick={() => { const next = { ...filters, employment: o.value }; setFilters(next); pushUrl(next, 1); }}
-                  className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                    employmentType === o.value 
-                    ? 'bg-red-50 text-red-700 font-semibold' 
-                    : 'text-gray-600 hover:bg-gray-50'
+                  key={o.value || "all-discipline"}
+                  type="button"
+                  onClick={() => {
+                    const next = { ...filters, jobTitle: o.value };
+                    setFilters(next);
+                    pushUrl(next, 1);
+                  }}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
+                    filters.jobTitle === o.value
+                      ? "border-red-600 bg-red-600 text-white"
+                      : "border-gray-200 text-gray-600 hover:border-gray-400"
                   }`}
                 >
                   {o.label}
@@ -323,31 +315,8 @@ const footerCategoryLinks = existingCategoryNames
             </div>
           </FilterSection>
 
-          <FilterSection title="Job title" icon={Briefcase}>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {JOB_TITLE_FILTER_OPTIONS.map((o) => (
-                <button
-                  key={o.value || "all-title"}
-                  type="button"
-                  onClick={() => {
-                    const next = { ...filters, jobTitle: o.value };
-                    setFilters(next);
-                    pushUrl(next, 1);
-                  }}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
-                    filters.jobTitle === o.value
-                      ? "border-red-600 bg-red-600 text-white"
-                      : "border-gray-200 text-gray-600 hover:border-gray-400"
-                  }`}
-                >
-                  {o.label}
-                </button>
-              ))}
-            </div>
-          </FilterSection>
-
           {/* Experience - Open List */}
-          <FilterSection title="Experience" icon={Briefcase}>
+          <FilterSection title="Experience" icon={Clock}>
             <div className="flex flex-wrap gap-2 mt-2">
               {experienceOptions.map((o) => (
                 <button

@@ -157,7 +157,7 @@ async function ensureEmployerAndCompany(
         clientName: CLIENT_NAME,
         email: EMPLOYER_EMAIL,
         passwordHash,
-        role: UserRole.EMPLOYER,
+        role: UserRole.COMPANY,
       }),
     );
     console.log(

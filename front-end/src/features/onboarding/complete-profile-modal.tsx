@@ -40,7 +40,7 @@ export function CompleteProfileModal({
   const [contactPhone, setContactPhone] = useState("");
 
   const isNurse = initialRole === "nurse";
-  const isEmployer = initialRole === "employer";
+  const isEmployer = initialRole === "company";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -57,7 +57,7 @@ export function CompleteProfileModal({
     try {
       // 1. REGISTER THE USER FIRST
       // This creates the user record and logs them in
-      if (initialRole !== "nurse" && initialRole !== "employer") {
+      if (initialRole !== "nurse" && initialRole !== "company") {
         setError("Please choose a valid account type and try again.");
         return;
       }
