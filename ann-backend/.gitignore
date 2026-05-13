@@ -1,3 +1,6 @@
+# Local secrets (copy from .env.example)
+.env
+
 # Dependencies
 node_modules/
 

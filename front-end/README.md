@@ -37,8 +37,8 @@ Dev server listens on **port 3003** (see `package.json`). Default Nest API is **
 ```bash
 cd front-end
 npm install
-cp .env.local.example .env.local
-# Edit .env.local -- especially API_UPSTREAM_URL and NEXT_PUBLIC_SOCKET_ORIGIN.
+cp .env.example .env
+# Or: `cp .env.local.example .env.local` — set `NEXT_PUBLIC_API_BASE_URL` to your Nest origin (default http://127.0.0.1:3001).
 npm run dev
 ```
 
@@ -60,17 +60,17 @@ Open [http://localhost:3003](http://localhost:3003).
 
 ## Environment
 
-Copy **`.env.local.example`** to **`.env.local`** and adjust. Highlights:
+Copy **`.env.example`** to **`.env`**, or **`.env.local.example`** to **`.env.local`**. For local development, **`NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:3001`** is enough: the browser and server use it for REST and Socket.IO (unless you override with `NEXT_PUBLIC_SOCKET_ORIGIN` or `API_UPSTREAM_URL`). Highlights:
 
 | Variable | Role |
 |----------|------|
-| `API_UPSTREAM_URL` | Nest URL for the Next **`/api/nest`** proxy and for server-side fetch when `NEXT_PUBLIC_API_BASE_URL` is unset |
-| `NEXT_PUBLIC_API_BASE_URL` | If a full **`https://?`** URL, the **browser** calls Nest directly (skips `/api/nest`); requires Nest **`CORS_ORIGINS`** to include your site |
-| `NEXT_PUBLIC_SOCKET_ORIGIN` | Nest origin for Socket.IO in the browser |
+| `NEXT_PUBLIC_API_BASE_URL` | Primary Nest **`http(s)://`** origin (REST + Socket.IO fallback); no trailing slash |
+| `API_UPSTREAM_URL` | Optional: overrides the Nest URL for the **`/api/nest`** rewrite and server proxy only |
+| `NEXT_PUBLIC_SOCKET_ORIGIN` | Optional: Nest origin for Socket.IO if it differs from `NEXT_PUBLIC_API_BASE_URL` |
 | `NEXT_PUBLIC_ANN_CLIENT_NAME` | Tenant / client name; must match backend |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe.js (employer checkout); mode must match backend keys |
 
-In the **browser**, REST uses **`/api/nest`** unless `NEXT_PUBLIC_API_BASE_URL` is a full `http(s)://` URL (see `src/lib/api/env.ts`). Comments in `.env.local.example` explain 503s and Stripe pitfalls.
+In the **browser**, REST uses **`/api/nest`** unless `NEXT_PUBLIC_API_BASE_URL` is a full `http(s)://` URL (see `src/lib/api/env.ts`).
 
 ---
 

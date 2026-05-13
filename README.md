@@ -45,19 +45,20 @@ npm run migration:run   # when you need schema updates (see TypeORM scripts in p
 npm run start:dev       # default http://localhost:3001
 ```
 
-Configure JWT, database, Redis, email, Stripe, and other settings in `ann-backend/.env` (start from `.env.example`).
+Configure `NODE_ENV`, JWT, database, Redis, CORS / `FRONTEND_URL` (local defaults in `.env.example` use **http://localhost:3003** for the Next dev server), email, Stripe, and other settings in `ann-backend/.env` (start from `.env.example`).
 
 ### 3. Frontend
 
 ```bash
 cd front-end
-cp .env.local.example .env.local
-# Point API_UPSTREAM_URL and NEXT_PUBLIC_SOCKET_ORIGIN at your Nest URL/port.
+cp .env.example .env
+# Optional: use `.env.local` instead — `cp .env.local.example .env.local`
+# Defaults target local Nest at http://127.0.0.1:3001 (see `NEXT_PUBLIC_API_BASE_URL`).
 npm install
 npm run dev             # http://localhost:3003
 ```
 
-The browser calls the API via **`/api/nest`** unless **`NEXT_PUBLIC_API_BASE_URL`** is a full `https://…` URL (direct to Nest); Socket.IO uses `NEXT_PUBLIC_SOCKET_ORIGIN` (see `src/lib/api/env.ts`). Details: [`front-end/README.md`](front-end/README.md).
+The app talks to Nest via **`NEXT_PUBLIC_API_BASE_URL`** (browser + server) or same-origin **`/api/nest`** when that is unset. Socket.IO uses the same base URL when socket-specific vars are unset (see `src/lib/api/env.ts`). Details: [`front-end/README.md`](front-end/README.md).
 
 ## Deployment
 
