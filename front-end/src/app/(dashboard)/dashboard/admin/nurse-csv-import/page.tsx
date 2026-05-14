@@ -78,7 +78,7 @@ export default function NurseCsvImportPage() {
           Select CSV File
         </label>
         <p className="mb-6 text-sm text-slate-500">
-          Max 10,000 unique emails (5MB limit).
+          Max 5,000 unique emails (5MB limit).
         </p>
         
         <div className="space-y-6">

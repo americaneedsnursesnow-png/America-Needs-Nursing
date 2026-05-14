@@ -180,7 +180,7 @@ async function ensureEmployerAndCompany(
         contactEmail: 'careers@metro-community-health.example',
         contactPhone: '+1-555-0100',
         approvalStatus: CompanyApprovalStatus.APPROVED,
-        subscriptionActive: true,
+        subscriptionPlanName: 'Demo partner subscription',
         subscriptionExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       }),
     );

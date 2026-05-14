@@ -1,5 +1,5 @@
 /**
- * Free job publishing (no active paid package + no subscription) is tracked
+ * Free job publishing (no active paid package + no named subscription) is tracked
  * per company per UTC calendar month: `companies.free_tier_yyyymm` +
  * `companies.free_tier_published_count` vs the tenant’s limit on `clients`
  * (see `ClientsService` / `DEFAULT_FREE_TIER_JOB_POSTS_PER_MONTH`).

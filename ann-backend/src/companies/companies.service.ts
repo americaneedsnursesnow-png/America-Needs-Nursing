@@ -119,6 +119,7 @@ export class CompaniesService {
     if (!company) {
       throw new NotFoundException('Company not found');
     }
+    await this.expireJobPackageIfNeeded(company);
     const freeTierJobPostsPerMonth =
       await this.clientsService.getFreeTierJobPostsPerMonthByClientName(
         user.clientName,
@@ -140,6 +141,7 @@ export class CompaniesService {
     if (!company) {
       return null;
     }
+    await this.expireJobPackageIfNeeded(company);
     const freeTierJobPostsPerMonth =
       await this.clientsService.getFreeTierJobPostsPerMonthByClientName(
         user.clientName,
@@ -397,14 +399,28 @@ export class CompaniesService {
     companyId: string,
     dto: SetSubscriptionDto,
   ): Promise<Company> {
+    if (
+      dto.subscriptionPlanName === undefined &&
+      dto.subscriptionExpiresAt === undefined
+    ) {
+      throw new BadRequestException(
+        'Provide subscriptionPlanName and/or subscriptionExpiresAt',
+      );
+    }
     const company = await this.companiesRepository.findOne({
       where: { id: companyId, clientName },
     });
     if (!company) {
       throw new NotFoundException('Company not found');
     }
-    company.subscriptionActive = dto.subscriptionActive;
-    company.subscriptionExpiresAt = dto.subscriptionExpiresAt ?? null;
+    if (dto.subscriptionPlanName !== undefined) {
+      const trimmed = dto.subscriptionPlanName?.trim();
+      company.subscriptionPlanName =
+        trimmed && trimmed.length > 0 ? trimmed : null;
+    }
+    if (dto.subscriptionExpiresAt !== undefined) {
+      company.subscriptionExpiresAt = dto.subscriptionExpiresAt ?? null;
+    }
     return this.companiesRepository.save(company);
   }
 
@@ -418,6 +434,7 @@ export class CompaniesService {
     if (!company) {
       throw new NotFoundException('Company not found');
     }
+    await this.expireJobPackageIfNeeded(company);
     return company;
   }
 
@@ -448,7 +465,35 @@ export class CompaniesService {
     if (!company) {
       throw new NotFoundException('Company not found');
     }
+    await this.expireJobPackageIfNeeded(company, em);
     return company;
+  }
+
+  /**
+   * Clears a Stripe / paid job package when `job_package_expires_at` is in the past.
+   * Idempotent; mutates and saves `company` when a reset is applied.
+   */
+  async expireJobPackageIfNeeded(
+    company: Company,
+    em?: EntityManager,
+  ): Promise<void> {
+    if (!company.jobPackageId) {
+      return;
+    }
+    if (
+      !company.jobPackageExpiresAt ||
+      company.jobPackageExpiresAt.getTime() > Date.now()
+    ) {
+      return;
+    }
+    company.jobPackageId = null;
+    company.jobPackageExpiresAt = null;
+    company.partnershipFeatured = false;
+    company.jobPackage = null;
+    company.subscriptionPlanName = null;
+    company.subscriptionExpiresAt = null;
+    const repo = em ? em.getRepository(Company) : this.companiesRepository;
+    await repo.save(company);
   }
 
   /**

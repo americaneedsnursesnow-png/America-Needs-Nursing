@@ -67,7 +67,7 @@ function extractErrorMessage(
     (base.startsWith("Bad Request") || base === "Request failed") &&
     !rawBody?.trim()
   ) {
-    base = `${base}. For Stripe checkout: open the request in DevTools → Response for Nest’s message. Common causes: successUrl/cancelUrl rejected (Nest @IsUrl often blocks localhost—use require_tld: false in the DTO), missing STRIPE_SECRET_KEY / webhook config on ann-backend, invalid package stripePriceId, or charge amount under $0.50 USD.`;
+    base = `${base}. For Stripe checkout: open the request in DevTools → Response for Nest’s message. Common causes: successUrl/cancelUrl rejected (Nest @IsUrl often blocks localhost—use require_tld: false in the DTO), missing STRIPE_SECRET_KEY on ann-backend, invalid package stripePriceId, or charge amount under $0.50 USD.`;
   }
   return `${base} (HTTP ${status})`;
 }

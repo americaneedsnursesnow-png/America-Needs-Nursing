@@ -11,6 +11,7 @@ import { Job } from './job.entity';
 import { JobPackage } from './job-package.entity';
 import { JobApplication } from './job-application.entity';
 import { Message } from './message.entity';
+import { NewsletterBroadcast } from './newsletter-broadcast.entity';
 import { NewsletterEvent } from './newsletter-event.entity';
 import { NewsletterSubscriber } from './newsletter-subscriber.entity';
 import { Notification } from './notification.entity';
@@ -35,6 +36,7 @@ export const typeOrmEntities = [
   Message,
   BlogPost,
   NewsletterSubscriber,
+  NewsletterBroadcast,
   NewsletterEvent,
   CommunityPost,
   CommunityComment,

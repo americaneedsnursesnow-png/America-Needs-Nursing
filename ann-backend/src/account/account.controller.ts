@@ -15,10 +15,14 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { UserRole } from '../database/entities';
+import { Roles } from '../common/decorators/roles.decorator';
+import { RolesGuard } from '../common/guards/roles.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import type { JwtUserPayload } from '../auth/types/jwt-user-payload';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AdminDashboardStatsService } from './admin-dashboard-stats.service';
 import { EmployerBootstrapService } from './employer-bootstrap.service';
 import { AccountService, type ProfilePhotoUploadFile } from './account.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -33,6 +37,7 @@ export class AccountController {
   constructor(
     private readonly accountService: AccountService,
     private readonly employerBootstrapService: EmployerBootstrapService,
+    private readonly adminDashboardStatsService: AdminDashboardStatsService,
   ) {}
 
   @Get('me')
@@ -44,6 +49,14 @@ export class AccountController {
   @Get('employer/bootstrap')
   getEmployerBootstrap(@CurrentUser() user: JwtUserPayload) {
     return this.employerBootstrapService.get(user);
+  }
+
+  /** Staff dashboard: nurse accounts, employer accounts, and jobs currently visible on the public board. */
+  @Get('admin/dashboard-stats')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CONTENT_ADMIN)
+  getAdminDashboardStats(@CurrentUser() user: JwtUserPayload) {
+    return this.adminDashboardStatsService.getStatsForClient(user.clientName);
   }
 
   @Post('me/photo')

@@ -126,11 +126,11 @@ export class JobPackagesService {
     company: Company,
     em?: EntityManager,
   ): Promise<{ useFreeTierPublishSlot: boolean }> {
-    if (
-      company.subscriptionActive &&
+    const namedSubscriptionActive =
+      !!company.subscriptionPlanName?.trim() &&
       (!company.subscriptionExpiresAt ||
-        company.subscriptionExpiresAt > new Date())
-    ) {
+        company.subscriptionExpiresAt > new Date());
+    if (namedSubscriptionActive) {
       return { useFreeTierPublishSlot: false };
     }
 

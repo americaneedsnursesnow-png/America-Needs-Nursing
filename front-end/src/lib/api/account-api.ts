@@ -17,6 +17,54 @@ export type AccountMeResponse = {
   communityBannedAt?: string | null;
 };
 
+export type AdminJobPackagePlanSummary = {
+  id: string;
+  name: string;
+  priceCents: number;
+  currency: string;
+  active: boolean;
+  featuredCompanyListing: boolean;
+  featuredJobLimit: number;
+  isUnlimited: boolean;
+  publishedJobLimit: number;
+};
+
+export type AdminCheckoutHistoryItem = {
+  sessionId: string;
+  createdAt: string;
+  amountTotalCents: number | null;
+  currency: string | null;
+  paymentStatus: string;
+  companyId: string | null;
+  packageId: string | null;
+};
+
+export type AdminDashboardRevenue = {
+  stripeConfigured: boolean;
+  employerPlans: AdminJobPackagePlanSummary[];
+  employersWithActiveSubscription: number;
+  employersWithActiveJobPackage: number;
+  activeJobPackageCatalogValueCents: number;
+  featuredListedJobsTotal: number;
+  featuredEmployerProfilesTotal: number;
+  recentCheckouts: AdminCheckoutHistoryItem[];
+};
+
+export type AdminDashboardStats = {
+  nurseTotal: number;
+  companyTotal: number;
+  listedJobsTotal: number;
+  revenue: AdminDashboardRevenue;
+};
+
+export async function getAdminDashboardStats(
+  accessToken: string,
+): Promise<AdminDashboardStats> {
+  return authedJson<AdminDashboardStats>("/account/admin/dashboard-stats", accessToken, {
+    method: "GET",
+  });
+}
+
 export async function getAccountMe(
   accessToken: string,
 ): Promise<AccountMeResponse> {

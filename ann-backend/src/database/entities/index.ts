@@ -16,6 +16,10 @@ export {
   NewsletterEvent,
   NewsletterEventType,
 } from './newsletter-event.entity';
+export {
+  NewsletterBroadcast,
+  NewsletterBroadcastStatus,
+} from './newsletter-broadcast.entity';
 export { NewsletterSubscriber } from './newsletter-subscriber.entity';
 export { Notification } from './notification.entity';
 export { NurseDatabaseRecord } from './nurse-database-record.entity';

@@ -1,9 +1,12 @@
 "use client";
-import React from 'react';
+import React from "react";
+import Image from "next/image";
 import { SiteContentWrapper } from "@/components/layout/SiteContentWrapper";
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { MessageSquare, Users, Briefcase, BookOpen, CheckCircle2, ArrowRight } from 'lucide-react';
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { MessageSquare, Users, CheckCircle2, ArrowRight } from "lucide-react";
+
+const SIGNUP_NURSE_IMAGE = "/signup-sc/nurse.avif";
 
 const AmericaNeedNursingSection = () => {
   const sentence = "Find your purpose in America's healthcare community.";
@@ -101,11 +104,13 @@ const AmericaNeedNursingSection = () => {
             <div className="absolute -bottom-4 -left-4 w-full h-full  rounded-[2.5rem] -z-10 transition-transform group-hover:-rotate-3 group-hover:scale-105 duration-500" />
             
             {/* Main Image Frame */}
-            <div className="w-full h-full bg-slate-500 rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white relative">
-              <img 
-                src="https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?q=80&w=1983&auto=format&fit=crop" 
-                alt="Nurse Professional"
-                className="w-full h-full object-cover mix-blend-multiply transition-transform duration-700 group-hover:scale-110"
+            <div className="relative h-full w-full overflow-hidden rounded-[2.5rem] border-4 border-white bg-slate-100 shadow-2xl">
+              <Image
+                src={SIGNUP_NURSE_IMAGE}
+                alt="Find your purpose in America's healthcare community"
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-110"
+                sizes="(max-width: 1024px) 100vw, 420px"
               />
               
               {/* Floating "Online Chat" Card */}

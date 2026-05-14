@@ -74,12 +74,13 @@ export function isAllowedAdminPathForRole(
   role: AuthUserRole,
   path: string,
 ): boolean {
-  if (!path.startsWith("/dashboard/admin")) return false;
   if (path.startsWith("//")) return false;
-  if (isFullOpsAdmin(role) || role === "super_admin") return true;
+  if (isFullOpsAdmin(role)) {
+    return path.startsWith("/dashboard/admin");
+  }
   if (role === "content_admin") {
     return (
-      path === "/dashboard/admin" ||
+      path === "/dashboard" ||
       path.startsWith("/dashboard/admin/blogs-write") ||
       path.startsWith("/dashboard/admin/newsletter") ||
       path.startsWith("/dashboard/admin/profile")
@@ -88,9 +89,9 @@ export function isAllowedAdminPathForRole(
   return false;
 }
 
-/** Default landing inside `/dashboard/admin` for shell roles (hub). */
+/** Default landing for staff who previously used the removed admin hub. */
 export function getAdminDashboardHomePath(): string {
-  return "/dashboard/admin";
+  return "/dashboard";
 }
 
 /** `POST /users` — super admin may create `content_admin` and `super_admin` only. */

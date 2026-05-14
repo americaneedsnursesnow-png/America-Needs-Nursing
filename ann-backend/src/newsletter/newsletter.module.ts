@@ -3,6 +3,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import {
+  NewsletterBroadcast,
   NewsletterEvent,
   NewsletterSubscriber,
   User,
@@ -15,7 +16,12 @@ import { NewsletterService } from './newsletter.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([NewsletterSubscriber, NewsletterEvent, User]),
+    TypeOrmModule.forFeature([
+      NewsletterSubscriber,
+      NewsletterEvent,
+      NewsletterBroadcast,
+      User,
+    ]),
     BullModule.registerQueue({ name: NEWSLETTER_BROADCAST_MAIL_QUEUE }),
     MailModule,
     forwardRef(() => AuthModule),

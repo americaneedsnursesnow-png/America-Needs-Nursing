@@ -34,8 +34,15 @@ POST   /newsletter/subscribe      — body: clientName, email (public)
 GET    /newsletter/unsubscribe    — query: token (public)
 POST   /newsletter/track          — body: subscriberId, eventType, optional url (public)
 
-POST   /newsletter/admin/broadcast — JWT super_admin; body: subject, html
-        Queues bulk BCC to all users with role nurse | employer for JWT clientName.
+POST   /newsletter/admin/broadcast — JWT super_admin | admin | content_admin; body: subject, html, optional scheduledAt (ISO-8601, omit = send ASAP)
+        Creates newsletter_broadcasts row (pending), queues delayed Bull job to BCC all nurse | company for JWT clientName.
+
+GET    /newsletter/admin/mail-status — same JWT roles; returns { outboundEmailConfigured: boolean }
+
+GET    /newsletter/admin/broadcasts — same JWT roles; query: page (default 1), limit (default 10, max 50); returns { items, meta: { page, limit, totalItems, totalPages } }.
+
+PATCH  /newsletter/admin/broadcasts/:id/schedule — same JWT roles; body: { scheduledAt }; pending only — replaces queue delay.
+
         Register + POST /users also add email to newsletter_subscribers (idempotent).
         Blog publish emails go to active newsletter_subscribers for that client.
 

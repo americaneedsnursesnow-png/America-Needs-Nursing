@@ -88,8 +88,17 @@ export class Company {
   @Column({ name: 'free_tier_published_count', type: 'int', default: 0 })
   freeTierPublishedCount: number;
 
-  @Column({ name: 'subscription_active', default: false })
-  subscriptionActive: boolean;
+  /**
+   * Human-readable paid subscription / partner plan label (admin or Stripe checkout).
+   * Null means no named subscription window; see also `subscriptionExpiresAt`.
+   */
+  @Column({
+    name: 'subscription_plan_name',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  subscriptionPlanName: string | null;
 
   @Column({
     name: 'subscription_expires_at',
@@ -103,6 +112,13 @@ export class Company {
 
   @Column({ name: 'job_package_id', type: 'uuid', nullable: true })
   jobPackageId: string | null;
+
+  /**
+   * Last job package id successfully paid for via Stripe (sync-checkout).
+   * Kept after the active `job_package_id` window expires for support / history.
+   */
+  @Column({ name: 'last_purchased_job_package_id', type: 'uuid', nullable: true })
+  lastPurchasedJobPackageId: string | null;
 
   @ManyToOne(() => JobPackage, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'job_package_id' })
