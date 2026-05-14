@@ -71,9 +71,22 @@ function restrictBlogAttrs(node: Element, hookEvent: AttrHookEvent): void {
   }
 }
 
+/** After DOMPurify strips invalid `src`, drop `<img>` entirely so React never sees `src=""`. */
+function removeImgWithoutUsableSrc(node: Node): void {
+  // Use `1` — `Node.ELEMENT_NODE` relies on the DOM `Node` global, which is undefined in some RSC/edge contexts.
+  if (node.nodeType !== 1) return;
+  const el = node as Element;
+  if (el.nodeName !== "IMG") return;
+  const src = el.getAttribute("src")?.trim() ?? "";
+  if (!src) {
+    el.remove();
+  }
+}
+
 /** Blog post body: StarterKit HTML plus `<img>` with trusted `/files/blog-images/…` sources only. */
 export function sanitizeBlogRichHtml(html: string): string {
   DOMPurify.addHook("uponSanitizeAttribute", restrictBlogAttrs);
+  DOMPurify.addHook("afterSanitizeAttributes", removeImgWithoutUsableSrc);
   try {
     return DOMPurify.sanitize(html, {
       ALLOWED_TAGS: [...BLOG_BODY_TAGS],
@@ -81,6 +94,7 @@ export function sanitizeBlogRichHtml(html: string): string {
     });
   } finally {
     DOMPurify.removeHook("uponSanitizeAttribute", restrictBlogAttrs);
+    DOMPurify.removeHook("afterSanitizeAttributes", removeImgWithoutUsableSrc);
   }
 }
 

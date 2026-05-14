@@ -46,6 +46,9 @@ export default async function BlogListPage({ searchParams }: PageProps) {
   const bottomFeature = posts[9];          // Wide Banner
   const bottomList = posts.slice(10, 13);  // "Latest Headlines"
 
+  const mainCover = mainFeature ? blogCoverSrc(mainFeature.coverImageUrl) : null;
+  const bottomCover = bottomFeature ? blogCoverSrc(bottomFeature.coverImageUrl) : null;
+
   const hrefPage = (p: number) =>
     `/blog?${new URLSearchParams({ page: String(p) }).toString()}`;
 
@@ -88,15 +91,20 @@ export default async function BlogListPage({ searchParams }: PageProps) {
           {leftSidebar.length > 0 && (
             <aside className="lg:col-span-3 space-y-8 lg:border-r lg:border-slate-200 lg:pr-8">
               <h2 className="text-xs font-black uppercase tracking-widest bg-slate-900 text-white px-2 py-1 inline-block mb-4">Trending</h2>
-              {leftSidebar.map((post) => (
+              {leftSidebar.map((post) => {
+                const cover = blogCoverSrc(post.coverImageUrl);
+                return (
                 <Link key={post.id} href={`/blog/${post.slug}`} className="group block border-b border-slate-100 pb-6 last:border-0">
                   <div className="aspect-[16/10] overflow-hidden bg-slate-100 mb-3  group-hover:grayscale-0 transition-all duration-500">
-                      <img src={blogCoverSrc(post.coverImageUrl) || ""} alt="" className="h-full w-full object-cover" />
+                      {cover ? (
+                        <img src={cover} alt="" className="h-full w-full object-cover" />
+                      ) : null}
                   </div>
                   <p className="text-[10px] font-bold text-red-600 uppercase mb-1 tracking-tight">{formatDate(post.publishedAt)}</p>
                   <h3 className="text-base font-bold leading-tight group-hover:text-red-600 underline-offset-2 decoration-2">{post.title}</h3>
                 </Link>
-              ))}
+              );
+              })}
             </aside>
           )}
 
@@ -109,8 +117,14 @@ export default async function BlogListPage({ searchParams }: PageProps) {
           `}>
             {mainFeature && (
               <Link href={`/blog/${mainFeature.slug}`} className="group block">
-                <div className="relative aspect-[4/3] w-full overflow-hidden mb-6">
-                    <img src={blogCoverSrc(mainFeature.coverImageUrl) || ""} alt="" className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105" />
+                <div className="relative aspect-[4/3] w-full overflow-hidden mb-6 bg-slate-100">
+                    {mainCover ? (
+                      <img
+                        src={mainCover}
+                        alt=""
+                        className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                      />
+                    ) : null}
                     <div className="absolute top-0 right-0 bg-red-600 text-white p-4 text-xs font-black uppercase tracking-[0.3em] [writing-mode:vertical-lr]">
                         Feature Story
                     </div>
@@ -136,17 +150,22 @@ export default async function BlogListPage({ searchParams }: PageProps) {
           {rightSidebar.length > 0 && (
             <aside className="lg:col-span-3 space-y-6 lg:border-l lg:border-slate-200 lg:pl-8">
               <h2 className="text-xs font-black uppercase tracking-widest border-b-2 border-slate-900 w-full pb-1 mb-4">Just In</h2>
-              {rightSidebar.map((post) => (
+              {rightSidebar.map((post) => {
+                const cover = blogCoverSrc(post.coverImageUrl);
+                return (
                 <Link key={post.id} href={`/blog/${post.slug}`} className="group flex gap-3 items-start border-b border-slate-50 pb-4">
                   <div className="h-16 w-16 shrink-0 bg-slate-100 overflow-hidden">
-                      <img src={blogCoverSrc(post.coverImageUrl) || ""} alt="" className="h-full w-full object-cover grayscale opacity-80" />
+                      {cover ? (
+                        <img src={cover} alt="" className="h-full w-full object-cover grayscale opacity-80" />
+                      ) : null}
                   </div>
                   <div>
                       <h3 className="text-xs font-bold leading-tight group-hover:text-red-600 group-hover:underline">{post.title}</h3>
                       <p className="text-[9px] font-bold text-slate-400 mt-2 uppercase tracking-tighter">{formatDate(post.publishedAt)}</p>
                   </div>
                 </Link>
-              ))}
+              );
+              })}
             </aside>
           )}
         </div>
@@ -158,12 +177,14 @@ export default async function BlogListPage({ searchParams }: PageProps) {
                   <div className="lg:col-span-8">
                       <Link href={`/blog/${bottomFeature.slug}`} className="group relative block overflow-hidden bg-slate-900">
                           <div className="flex flex-col md:flex-row items-stretch">
-                              <div className="w-full md:w-1/2 aspect-video overflow-hidden">
-                                  <img 
-                                    src={blogCoverSrc(bottomFeature.coverImageUrl) || ""} 
-                                    alt="" 
-                                    className="h-full w-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" 
-                                  />
+                              <div className="w-full md:w-1/2 aspect-video overflow-hidden bg-slate-800">
+                                  {bottomCover ? (
+                                    <img
+                                      src={bottomCover}
+                                      alt=""
+                                      className="h-full w-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700"
+                                    />
+                                  ) : null}
                               </div>
                               <div className="p-10 md:w-1/2 flex flex-col justify-center text-white">
                                   <span className="text-red-500 text-[10px] font-black tracking-[0.3em] uppercase mb-4">Special Report</span>

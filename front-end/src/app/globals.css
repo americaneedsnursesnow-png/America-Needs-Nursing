@@ -139,16 +139,8 @@ button:focus-visible {
 .job-rich-html li {
   margin: 0.15rem 0;
 }
-.job-rich-html h2 {
-  font-size: 1.125rem;
-  font-weight: 700;
-  margin: 0.75rem 0 0.35rem;
-}
-.job-rich-html h3 {
-  font-size: 1rem;
-  font-weight: 700;
-  margin: 0.65rem 0 0.25rem;
-}
+/* Headings: rely on parent `.prose` (Tailwind Typography) or editor `.ProseMirror` rules — do not
+   set h2/h3 here or they override `prose` on published blog HTML inside `.job-rich-html`. */
 .job-rich-html blockquote {
   border-left: 3px solid #d1d5db;
   padding-left: 0.75rem;

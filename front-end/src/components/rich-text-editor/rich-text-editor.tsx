@@ -5,6 +5,8 @@ import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import StarterKit from "@tiptap/starter-kit";
+
+import { isRichTextEffectivelyEmpty } from "@/lib/sanitize-job-html";
 import {
   Bold,
   Heading2,
@@ -223,6 +225,8 @@ export function RichTextEditor({
   const imageFileInputRef = useRef<HTMLInputElement>(null);
   const bodyImageUploadRef = useRef(bodyImageUpload);
   bodyImageUploadRef.current = bodyImageUpload;
+  /** Avoid resetting the editor when the parent value came from our own `onChange`. */
+  const lastEmittedHtmlRef = useRef<string | null>(null);
 
   const enableBodyImages = Boolean(bodyImageUpload);
 
@@ -255,7 +259,7 @@ export function RichTextEditor({
     {
       immediatelyRender: false,
       extensions,
-      content: value || "", 
+      content: value || "",
       editable: !disabled,
       editorProps: {
         attributes: {
@@ -264,12 +268,10 @@ export function RichTextEditor({
         },
       },
       onUpdate: ({ editor: ed }) => {
-        // Use getText() instead of getHTML() to save simple text to the database.
-        // The blockSeparator ensures that paragraphs are separated by new lines (\n).
-        const simpleText = ed.getText({ blockSeparator: "\n" });
-        
-        // Handle empty state: if the text is just whitespace, save as empty string
-        onChange(simpleText.trim().length === 0 ? "" : simpleText);
+        const html = ed.getHTML();
+        const out = isRichTextEffectivelyEmpty(html) ? "" : html;
+        lastEmittedHtmlRef.current = out;
+        onChange(out);
       },
     },
     [extensions],
@@ -278,6 +280,23 @@ export function RichTextEditor({
   useEffect(() => {
     editor?.setEditable(!disabled);
   }, [editor, disabled]);
+
+  /** Keep editor in sync when `value` is set from outside (e.g. load post, reset form). */
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    if (value === lastEmittedHtmlRef.current) return;
+    const current = editor.getHTML();
+    if (isRichTextEffectivelyEmpty(value) && isRichTextEffectivelyEmpty(current)) {
+      lastEmittedHtmlRef.current = value;
+      return;
+    }
+    if (value === current) {
+      lastEmittedHtmlRef.current = value;
+      return;
+    }
+    editor.commands.setContent(value || "", { emitUpdate: false });
+    lastEmittedHtmlRef.current = value;
+  }, [value, editor]);
 
   return (
     <div

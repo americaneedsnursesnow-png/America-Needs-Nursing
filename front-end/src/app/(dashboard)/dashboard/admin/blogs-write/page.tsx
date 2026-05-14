@@ -226,6 +226,8 @@ export default function AdminBlogSystem() {
     `${p.title} ${p.slug}`.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
+  const formCoverPreview = blogCoverSrc(formData.coverImageUrl);
+
   if (!ready || !user) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-slate-500">
@@ -299,16 +301,18 @@ export default function AdminBlogSystem() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {filtered.map((post) => (
+                    {filtered.map((post) => {
+                      const cover = blogCoverSrc(post.coverImageUrl);
+                      return (
                       <tr
                         key={post.id}
                         className="group transition-colors hover:bg-slate-50/50"
                       >
                         <td className="px-4 py-8 pl-10 align-middle">
-                          {blogCoverSrc(post.coverImageUrl) ? (
+                          {cover ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
-                              src={blogCoverSrc(post.coverImageUrl) ?? ""}
+                              src={cover}
                               alt=""
                               className="h-12 w-12 rounded-xl border border-slate-100 object-cover"
                             />
@@ -351,7 +355,8 @@ export default function AdminBlogSystem() {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                    );
+                    })}
                   </tbody>
                 </table>
               )}
@@ -486,11 +491,11 @@ export default function AdminBlogSystem() {
                       Cover image
                     </span>
                     <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
-                      {blogCoverSrc(formData.coverImageUrl) ? (
+                      {formCoverPreview ? (
                         <div className="relative aspect-video w-full">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={blogCoverSrc(formData.coverImageUrl) ?? ""}
+                            src={formCoverPreview}
                             alt=""
                             className="h-full w-full object-cover"
                           />

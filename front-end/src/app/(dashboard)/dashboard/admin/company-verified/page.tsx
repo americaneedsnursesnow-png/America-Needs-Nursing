@@ -288,16 +288,18 @@ export default function CompanyVerifications() {
       ) : (
         <div className="space-y-4">
           {filteredCompanies.length > 0 ? (
-            filteredCompanies.map((company) => (
+            filteredCompanies.map((company) => {
+              const logo = blogCoverSrc(company.logoUrl);
+              return (
               <div
                 key={company.id}
                 className="group flex flex-col items-center gap-6 rounded-[28px] border border-slate-100 bg-white p-6 transition-all hover:border-red-100 md:flex-row"
               >
                 <div className="flex flex-1 items-center gap-5">
-                  {blogCoverSrc(company.logoUrl) ? (
+                  {logo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={blogCoverSrc(company.logoUrl) ?? ""}
+                      src={logo}
                       alt=""
                       className="h-16 w-16 rounded-2xl border border-slate-100 object-cover"
                     />
@@ -344,7 +346,8 @@ export default function CompanyVerifications() {
                   <ExternalLink size={18} />
                 </Link>
               </div>
-            ))
+            );
+            })
           ) : (
             <div className="rounded-[40px] border border-dashed border-slate-200 bg-slate-50 py-20 text-center">
               <Building2 size={48} className="mx-auto mb-4 text-slate-300" />

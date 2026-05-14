@@ -49,7 +49,9 @@ export async function BlogSection() {
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => (
+            {posts.map((post) => {
+              const cover = blogCoverSrc(post.coverImageUrl);
+              return (
               <div
                 key={post.id}
                 className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all duration-500 hover:shadow-2xl"
@@ -58,10 +60,10 @@ export async function BlogSection() {
                   className="relative flex h-56 items-center justify-center overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200"
                   aria-hidden
                 >
-                  {blogCoverSrc(post.coverImageUrl) ? (
+                  {cover ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={blogCoverSrc(post.coverImageUrl) ?? ""}
+                      src={cover}
                       alt=""
                       className="absolute inset-0 h-full w-full object-cover"
                     />
@@ -100,7 +102,8 @@ export async function BlogSection() {
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
 

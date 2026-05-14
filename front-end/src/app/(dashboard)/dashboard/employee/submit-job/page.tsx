@@ -59,6 +59,8 @@ export default function SubmitJobPage() {
       ? companyError ||
         (!company ? "Complete your company profile first to post jobs." : null)
       : null;
+  const companyLogoSrc = blogCoverSrc(company?.logoUrl);
+  const companyHeroSrc = blogCoverSrc(company?.heroImageUrl);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [requirements, setRequirements] = useState("");
@@ -259,8 +261,8 @@ export default function SubmitJobPage() {
                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Company Logo</label>
                       <div className="flex items-center gap-6">
                         <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-3xl border-2 border-gray-100 bg-gray-50 shadow-inner">
-                          {blogCoverSrc(company?.logoUrl) ? (
-                            <img src={blogCoverSrc(company?.logoUrl)!} alt="" className="h-full w-full object-cover" />
+                          {companyLogoSrc ? (
+                            <img src={companyLogoSrc} alt="" className="h-full w-full object-cover" />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center">
                               <UploadCloud className="h-8 w-8 text-gray-300" />
@@ -284,8 +286,8 @@ export default function SubmitJobPage() {
                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Hero Banner</label>
                       <div className="flex items-center gap-6">
                         <div className="relative h-24 w-40 flex-shrink-0 overflow-hidden rounded-3xl border-2 border-gray-100 bg-gray-50 shadow-inner">
-                          {blogCoverSrc(company?.heroImageUrl) ? (
-                            <img src={blogCoverSrc(company?.heroImageUrl)!} alt="" className="h-full w-full object-cover" />
+                          {companyHeroSrc ? (
+                            <img src={companyHeroSrc} alt="" className="h-full w-full object-cover" />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center">
                               <LayoutGrid className="h-8 w-8 text-gray-300" />

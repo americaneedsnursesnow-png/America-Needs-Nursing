@@ -186,7 +186,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                     <h2 className="text-sm font-black uppercase tracking-widest text-gray-400">Description</h2>
                     <div className="h-px flex-1 bg-gray-100" />
                   </div>
-                  <div className="rounded-2xl border border-gray-100 bg-slate-50/40 p-5 sm:p-6">
+                  <div className="rounded-2xl border border-gray-100 bg-slate-50/40 p-5 sm:p-6 prose prose-slate prose-sm max-w-none prose-headings:font-semibold">
                     <JobRichBody html={job.description} />
                   </div>
                 </section>
@@ -198,7 +198,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                       <h2 className="text-sm font-black uppercase tracking-widest text-gray-400">Requirements</h2>
                       <div className="h-px flex-1 bg-gray-100" />
                     </div>
-                    <div className="rounded-2xl border border-gray-100 bg-slate-50/40 p-5 sm:p-6">
+                    <div className="rounded-2xl border border-gray-100 bg-slate-50/40 p-5 sm:p-6 prose prose-slate prose-sm max-w-none prose-headings:font-semibold">
                       <JobRichBody html={job.requirements} />
                     </div>
                   </section>
