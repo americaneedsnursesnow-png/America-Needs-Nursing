@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -10,13 +11,12 @@ import Stripe from 'stripe';
 import { Repository } from 'typeorm';
 
 type StripeClient = InstanceType<typeof Stripe>;
-type StripeWebhookEvent = ReturnType<
-  StripeClient['webhooks']['constructEvent']
->;
 import type { JwtUserPayload } from '../auth/types/jwt-user-payload';
+import { CompaniesService } from '../companies/companies.service';
 import { Company, JobPackage } from '../database/entities';
 import { JobPackagesService } from '../job-packages/job-packages.service';
 import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
+import { addOneCalendarMonthUtc } from './job-package-billing-period';
 import {
   describeBelowStripeMinimum,
   stripeMinimumChargeUnits,
@@ -32,6 +32,7 @@ export class PaymentsService {
     @InjectRepository(Company)
     private readonly companiesRepository: Repository<Company>,
     private readonly jobPackagesService: JobPackagesService,
+    private readonly companiesService: CompaniesService,
   ) {
     const key = this.config.get<string>('STRIPE_SECRET_KEY')?.trim();
     this.stripe = key ? new Stripe(key) : null;
@@ -40,7 +41,10 @@ export class PaymentsService {
   async createCheckoutSession(
     user: JwtUserPayload,
     dto: CreateCheckoutSessionDto,
-  ): Promise<{ url: string } | { clientSecret: string }> {
+  ): Promise<
+    | { url: string; clientSecret?: undefined; sessionId?: undefined }
+    | { clientSecret: string; sessionId: string; url?: undefined }
+  > {
     if (!this.stripe) {
       throw new BadRequestException('Stripe is not configured');
     }
@@ -52,17 +56,29 @@ export class PaymentsService {
         'Create a company profile before purchasing a package',
       );
     }
+    await this.companiesService.expireJobPackageIfNeeded(company);
     const pkg = await this.jobPackagesService.findActiveForCheckout(
       user.clientName,
       dto.packageId,
     );
+    const samePlanStillActive =
+      company.jobPackageId === pkg.id &&
+      (!company.jobPackageExpiresAt ||
+        company.jobPackageExpiresAt.getTime() > Date.now());
+    if (samePlanStillActive) {
+      throw new BadRequestException(
+        'This plan is already active on your account. You can purchase it again after it expires.',
+      );
+    }
     const defaultBase =
       this.config.get<string>('FRONTEND_URL')?.trim() ??
       'http://localhost:3000';
     const successUrl =
-      dto.successUrl ?? `${defaultBase}/dashboard?checkout=success`;
+      dto.successUrl ??
+      `${defaultBase}/dashboard/employee/package/profile?checkout=success&session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl =
-      dto.cancelUrl ?? `${defaultBase}/dashboard?checkout=cancel`;
+      dto.cancelUrl ??
+      `${defaultBase}/dashboard/employee/package/profile?checkout=cancel`;
 
     const lineItems = this.buildCheckoutLineItems(pkg);
     const metadata = {
@@ -95,7 +111,7 @@ export class PaymentsService {
             'Stripe did not return a client secret for embedded checkout',
           );
         }
-        return { clientSecret };
+        return { clientSecret, sessionId: session.id };
       }
 
       session = await this.stripe.checkout.sessions.create({
@@ -190,68 +206,253 @@ export class PaymentsService {
     ];
   }
 
-  async handleStripeWebhook(
-    signature: string | undefined,
-    rawBody: Buffer,
-  ): Promise<{ received: true }> {
-    const secret = this.config.get<string>('STRIPE_WEBHOOK_SECRET')?.trim();
-    if (!this.stripe || !secret) {
-      this.logger.warn('Stripe webhook called but Stripe is not configured');
-      throw new BadRequestException();
+  /**
+   * Checkout Session can lag `payment_status` behind a succeeded PaymentIntent.
+   * If `expand` still leaves `payment_intent` as an id string, we retrieve the PI.
+   */
+  private async isCheckoutSessionPaymentCaptured(
+    session: Awaited<
+      ReturnType<StripeClient['checkout']['sessions']['retrieve']>
+    >,
+  ): Promise<boolean> {
+    const ps = session.payment_status ?? '';
+    if (ps === 'paid' || ps === 'no_payment_required') {
+      return true;
     }
-    if (!signature) {
-      throw new BadRequestException('Missing stripe-signature header');
+    let pi: unknown = session.payment_intent;
+    if (typeof pi === 'string' && pi.length > 0 && this.stripe) {
+      pi = await this.stripe.paymentIntents.retrieve(pi);
     }
-    let event: StripeWebhookEvent;
-    try {
-      event = this.stripe.webhooks.constructEvent(rawBody, signature, secret);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'invalid payload';
-      this.logger.warn(`Stripe webhook signature failed: ${msg}`);
-      throw new BadRequestException('Invalid Stripe signature');
+    if (
+      pi &&
+      typeof pi === 'object' &&
+      'status' in pi &&
+      (pi as { status?: string }).status === 'succeeded'
+    ) {
+      return true;
     }
-
-    if (event.type === 'checkout.session.completed') {
-      await this.onCheckoutSessionCompleted(event.data.object);
-    }
-
-    return { received: true };
+    return false;
   }
 
-  private async onCheckoutSessionCompleted(session: {
-    metadata?: Record<string, string> | null;
-  }): Promise<void> {
-    const meta = session.metadata ?? {};
-    const clientName = meta.clientName;
-    const companyId = meta.companyId;
-    const packageId = meta.packageId;
-    if (!clientName || !companyId || !packageId) {
-      this.logger.warn('checkout.session.completed missing metadata');
+  private formatCheckoutSessionPaymentDebug(
+    session: Awaited<
+      ReturnType<StripeClient['checkout']['sessions']['retrieve']>
+    >,
+    paymentIntent?: { status?: string } | null,
+  ): string {
+    const piStatus =
+      paymentIntent?.status ??
+      (session.payment_intent &&
+      typeof session.payment_intent === 'object' &&
+      'status' in session.payment_intent
+        ? String(
+            (session.payment_intent as { status?: string }).status ?? 'unknown',
+          )
+        : typeof session.payment_intent === 'string'
+          ? `id_only(${session.payment_intent.slice(0, 12)}…)`
+          : 'none');
+    return `session.status=${session.status ?? 'unknown'} payment_status=${session.payment_status ?? 'unknown'} payment_intent.status=${piStatus}`;
+  }
+
+  private async assertCheckoutSessionPaymentCaptured(
+    session: Awaited<
+      ReturnType<StripeClient['checkout']['sessions']['retrieve']>
+    >,
+  ): Promise<void> {
+    if (await this.isCheckoutSessionPaymentCaptured(session)) {
       return;
     }
+    let piForMsg: { status?: string } | null = null;
+    let pi: unknown = session.payment_intent;
+    if (typeof pi === 'string' && pi.length > 0 && this.stripe) {
+      try {
+        piForMsg = await this.stripe.paymentIntents.retrieve(pi);
+      } catch {
+        piForMsg = null;
+      }
+    } else if (pi && typeof pi === 'object') {
+      piForMsg = pi as { status?: string };
+    }
+    const detail = this.formatCheckoutSessionPaymentDebug(session, piForMsg);
+    throw new BadRequestException(
+      `Checkout is not settled yet (${detail}). Wait a few seconds and use Refresh, or contact support if this persists.`,
+    );
+  }
+
+  /**
+   * Embedded Checkout can fire the client "complete" callback before Stripe's
+   * session object shows `paid` / a succeeded PaymentIntent. Poll briefly.
+   */
+  private async retrieveCheckoutSessionWhenPaymentCaptured(
+    sessionId: string,
+  ): Promise<
+    Awaited<ReturnType<StripeClient['checkout']['sessions']['retrieve']>>
+  > {
+    const stripe = this.stripe!;
+    const maxAttempts = 22;
+    const delayMs = 550;
+    let session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['payment_intent'],
+    });
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      if (await this.isCheckoutSessionPaymentCaptured(session)) {
+        return session;
+      }
+      if (attempt < maxAttempts - 1) {
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, delayMs);
+        });
+        session = await stripe.checkout.sessions.retrieve(sessionId, {
+          expand: ['payment_intent'],
+        });
+      }
+    }
+    await this.assertCheckoutSessionPaymentCaptured(session);
+    throw new Error(
+      'retrieveCheckoutSessionWhenPaymentCaptured: expected assert to throw',
+    );
+  }
+
+  private async applyPaidJobPackageFromCheckoutMetadata(
+    params: {
+      clientName: string;
+      companyId: string;
+      packageId: string;
+    },
+    paidAt: Date,
+  ): Promise<void> {
+    const { clientName, companyId, packageId } = params;
 
     const company = await this.companiesRepository.findOne({
       where: { id: companyId, clientName },
     });
     if (!company) {
-      this.logger.warn(`Company ${companyId} not found for Stripe webhook`);
-      return;
+      this.logger.warn(`Company ${companyId} not found for Stripe checkout`);
+      throw new NotFoundException(
+        'Company for this checkout was not found. Check that you are on the correct account.',
+      );
     }
 
-    let pkg;
-    try {
-      pkg = await this.jobPackagesService.ensureBelongsToClient(
-        packageId,
-        clientName,
-      );
-    } catch {
-      this.logger.warn(`Package ${packageId} invalid for webhook`);
-      return;
-    }
+    await this.companiesService.expireJobPackageIfNeeded(company);
+
+    const pkg = await this.jobPackagesService.ensureBelongsToClient(
+      packageId,
+      clientName,
+    );
 
     company.jobPackageId = packageId;
-    company.jobPackageExpiresAt = null;
+    company.lastPurchasedJobPackageId = packageId;
+    const expiresAt = addOneCalendarMonthUtc(paidAt);
+    company.jobPackageExpiresAt = expiresAt;
     company.partnershipFeatured = pkg.featuredCompanyListing;
+    company.subscriptionPlanName = pkg.name;
+    company.subscriptionExpiresAt = expiresAt;
     await this.companiesRepository.save(company);
+    this.logger.log(
+      `Stripe checkout applied job package ${packageId} to company ${companyId} (${clientName})`,
+    );
+  }
+
+  /**
+   * After the browser confirms Checkout succeeded, the client calls this with the
+   * Checkout Session id (`cs_…`). We retrieve the session from Stripe, verify
+   * payment, and persist the purchased job package on the company.
+   */
+  async syncCheckoutSessionForEmployer(
+    user: JwtUserPayload,
+    sessionId: string,
+  ): Promise<{ ok: true }> {
+    if (!this.stripe) {
+      throw new BadRequestException('Stripe is not configured');
+    }
+    const sid = sessionId.trim();
+    const session = await this.retrieveCheckoutSessionWhenPaymentCaptured(sid);
+    const meta = session.metadata ?? {};
+    const norm = (v: string | undefined | null) => (v ?? '').trim().toLowerCase();
+    if (
+      norm(meta.clientName) !== norm(user.clientName) ||
+      norm(meta.employerUserId) !== norm(user.sub)
+    ) {
+      throw new ForbiddenException(
+        'This checkout session does not belong to your account.',
+      );
+    }
+    const companyId = meta.companyId?.trim();
+    const packageId = meta.packageId?.trim();
+    if (!companyId || !packageId) {
+      throw new BadRequestException('Checkout session is missing package metadata.');
+    }
+    const created = session.created ?? Math.floor(Date.now() / 1000);
+    const paidAt = new Date(created * 1000);
+    await this.applyPaidJobPackageFromCheckoutMetadata(
+      { clientName: user.clientName, companyId, packageId },
+      paidAt,
+    );
+    return { ok: true };
+  }
+
+  isStripeConfigured(): boolean {
+    return this.stripe !== null;
+  }
+
+  /**
+   * Recent Checkout sessions for this tenant (metadata.clientName), newest first.
+   * Used for admin payment history; not a full financial ledger.
+   */
+  async listRecentCheckoutSessionsForClient(
+    clientName: string,
+    limit: number,
+  ): Promise<
+    Array<{
+      sessionId: string;
+      createdAt: string;
+      amountTotalCents: number | null;
+      currency: string | null;
+      paymentStatus: string;
+      companyId: string | null;
+      packageId: string | null;
+    }>
+  > {
+    if (!this.stripe) {
+      return [];
+    }
+    const want = Math.min(50, Math.max(1, limit));
+    const matches: Array<{
+      sessionId: string;
+      createdAt: string;
+      amountTotalCents: number | null;
+      currency: string | null;
+      paymentStatus: string;
+      companyId: string | null;
+      packageId: string | null;
+    }> = [];
+    let startingAfter: string | undefined;
+    for (let page = 0; page < 8 && matches.length < want; page++) {
+      const res = await this.stripe.checkout.sessions.list({
+        limit: 100,
+        starting_after: startingAfter,
+      });
+      for (const s of res.data) {
+        if (s.metadata?.clientName === clientName) {
+          matches.push({
+            sessionId: s.id,
+            createdAt: new Date(s.created * 1000).toISOString(),
+            amountTotalCents: s.amount_total,
+            currency: s.currency ?? null,
+            paymentStatus: s.payment_status,
+            companyId: s.metadata?.companyId ?? null,
+            packageId: s.metadata?.packageId ?? null,
+          });
+          if (matches.length >= want) {
+            break;
+          }
+        }
+      }
+      if (!res.has_more || res.data.length === 0) {
+        break;
+      }
+      startingAfter = res.data[res.data.length - 1]!.id;
+    }
+    return matches;
   }
 }

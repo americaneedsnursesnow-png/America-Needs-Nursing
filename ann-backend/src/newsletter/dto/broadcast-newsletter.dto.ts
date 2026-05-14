@@ -1,4 +1,4 @@
-import { IsString, MaxLength, MinLength } from 'class-validator';
+import { IsDateString, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class BroadcastNewsletterDto {
   @IsString()
@@ -11,4 +11,9 @@ export class BroadcastNewsletterDto {
   @MinLength(1)
   @MaxLength(500000)
   html: string;
+
+  /** ISO-8601 send time (UTC). Omit for immediate send. */
+  @IsOptional()
+  @IsDateString()
+  scheduledAt?: string;
 }

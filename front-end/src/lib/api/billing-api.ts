@@ -9,8 +9,8 @@ export type CreateCheckoutSessionBody = {
 };
 
 export type CheckoutSessionResponse =
-  | { url: string; clientSecret?: undefined }
-  | { clientSecret: string; url?: undefined };
+  | { url: string; clientSecret?: undefined; sessionId?: undefined }
+  | { clientSecret: string; sessionId: string; url?: undefined };
 
 export async function createStripeCheckoutSession(
   accessToken: string,
@@ -34,7 +34,7 @@ export type SyncStripeCheckoutSessionResponse = {
   ok: boolean;
 };
 
-/** Confirms payment with Stripe API and writes the package to the company (fallback when webhooks are missing or slow). */
+/** Retrieves the Checkout Session from Stripe and saves the purchased job package on the company (no webhooks). */
 export async function syncStripeCheckoutSession(
   accessToken: string,
   body: SyncStripeCheckoutSessionBody,

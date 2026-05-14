@@ -23,7 +23,6 @@ import {
   Users,
   FileSpreadsheet,
   LayoutList,
-  LayoutGrid,
 } from "lucide-react";
 
 import { NotificationBellLink } from "@/components/notifications/notification-bell-link";
@@ -32,7 +31,6 @@ import { useAuth } from "@/contexts/auth-context";
 import { useCommunityHubUnread } from "@/contexts/community-hub-unread-context";
 import {
   type AuthUserRole,
-  canAccessAdminShell,
   canAccessCommunity,
   getCommunityHubPath,
   getProfileUpdatePath,
@@ -47,13 +45,12 @@ type MenuItem = {
 };
 
 const menuItems: MenuItem[] = [
-  { id: "dashboard", label: "User Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["nurse", "company"] },
   {
-    id: "admin-hub",
-    label: "Admin dashboard",
-    path: "/dashboard/admin",
-    icon: LayoutGrid,
-    roles: ["super_admin", "admin", "content_admin"],
+    id: "dashboard",
+    label: "Dashboard",
+    path: "/dashboard",
+    icon: LayoutDashboard,
+    roles: ["nurse", "company", "admin", "super_admin", "content_admin"],
   },
   { id: "change-profile", label: "Change profile", path: "/profile/update", icon: UserPen, roles: ["nurse", "company", "admin", "super_admin", "content_admin"] },
   { id: "community", label: "Community", path: "/community", icon: Users, roles: ["nurse", "super_admin"] },
@@ -96,9 +93,6 @@ export default function Sidebar() {
 
   const visibleMenuItems = menuItems.filter((item) => {
     if (!user || !item.roles.includes(user.role)) return false;
-    if (item.id === "admin-hub") {
-      return canAccessAdminShell(user.role);
-    }
     if (item.id === "community") {
       return canAccessCommunity(user.role, { communityBannedAt: user.communityBannedAt });
     }
@@ -113,6 +107,7 @@ export default function Sidebar() {
 
   const displayName = user?.fullName?.trim() || user?.email || "Account";
   const email = user?.email ?? "";
+  const showNotificationBell = user?.role === "nurse";
 
   return (
     <>
@@ -156,7 +151,9 @@ export default function Sidebar() {
                   className="!ring-4 !ring-red-50"
                 />
                 <div className="absolute -bottom-0.5 -right-0.5">
-                  <NotificationBellLink className="h-9 w-9 bg-white shadow-md ring-1 ring-slate-100" />
+                  {showNotificationBell ? (
+                    <NotificationBellLink className="h-9 w-9 bg-white shadow-md ring-1 ring-slate-100" />
+                  ) : null}
                 </div>
               </div>
               <h3 className="w-full truncate px-2 text-center text-lg font-bold text-gray-900">
@@ -186,12 +183,9 @@ export default function Sidebar() {
                 ? getProfileUpdatePath(user.role)
                 : item.path;
             
-            // Admin hub: only active on exact `/dashboard/admin` (not every child route).
             const isActive =
-              item.id === "admin-hub"
-                ? pathname === "/dashboard/admin"
-                : pathname === href ||
-                  (href !== "/dashboard" && pathname.startsWith(href));
+              pathname === href ||
+              (href !== "/dashboard" && pathname.startsWith(href));
 
             return (
               <Link

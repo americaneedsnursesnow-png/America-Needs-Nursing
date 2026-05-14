@@ -7,6 +7,8 @@ import { X } from "lucide-react";
 type StripeEmbeddedCheckoutModalProps = {
   clientSecret: string;
   onClose: () => void;
+  /** Called when payment completes successfully (before user closes the modal). */
+  onCheckoutComplete?: () => void;
 };
 
 /**
@@ -15,10 +17,16 @@ type StripeEmbeddedCheckoutModalProps = {
 export function StripeEmbeddedCheckoutModal({
   clientSecret,
   onClose,
+  onCheckoutComplete,
 }: StripeEmbeddedCheckoutModalProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const checkoutRef = useRef<StripeEmbeddedCheckout | null>(null);
+  const onCloseRef = useRef(onClose);
+  const onCheckoutCompleteRef = useRef(onCheckoutComplete);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  onCloseRef.current = onClose;
+  onCheckoutCompleteRef.current = onCheckoutComplete;
 
   useEffect(() => {
     const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim();
@@ -38,6 +46,9 @@ export function StripeEmbeddedCheckoutModal({
 
         const checkout = await stripe.initEmbeddedCheckout({
           fetchClientSecret: async () => clientSecret,
+          onComplete: () => {
+            onCheckoutCompleteRef.current?.();
+          },
         });
         if (cancelled) {
           checkout.destroy();
@@ -66,7 +77,7 @@ export function StripeEmbeddedCheckoutModal({
   function handleClose() {
     checkoutRef.current?.destroy();
     checkoutRef.current = null;
-    onClose();
+    onCloseRef.current();
   }
 
   return (

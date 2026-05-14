@@ -1,8 +1,11 @@
 "use client";
 import React, { useState } from "react";
+import Image from "next/image";
 import { SiteContentWrapper } from "@/components/layout/SiteContentWrapper";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+
+const NURSE_APPRECIATION_IMAGE = `/signup-sc/${encodeURIComponent("nurse website.avif")}`;
 
 const NursePromoBanner = () => {
   const [isVisible, setIsVisible] = useState(true);
@@ -24,10 +27,12 @@ const NursePromoBanner = () => {
                   <div className="w-full p-2 md:w-2/5 md:p-4">
                     <div className="relative h-64 w-full overflow-hidden rounded-2xl shadow-inner md:h-80">
                       <div className="absolute inset-0 z-10 bg-gradient-to-tr from-red-600/20 to-transparent" />
-                      <img
-                        src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=2070&auto=format&fit=crop"
-                        alt="Nurses at work"
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      <Image
+                        src={NURSE_APPRECIATION_IMAGE}
+                        alt="Nurse Appreciation Month — live sessions for nurses"
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        sizes="(max-width: 768px) 100vw, 40vw"
                       />
                       <div className="absolute bottom-4 left-4 z-20 rounded-full border border-red-100 bg-white/90 px-3 py-1 backdrop-blur-sm">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-red-600">

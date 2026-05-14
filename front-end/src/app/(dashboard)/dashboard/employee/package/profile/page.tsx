@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -73,10 +73,33 @@ function purchaseSnapshotLines(s: JobPackagePurchaseSnapshot): string[] {
   return lines;
 }
 
+function isEmployerPaidJobPackageActive(company: CompanyResponse): boolean {
+  if (!company.jobPackageId) {
+    return false;
+  }
+  if (!company.jobPackageExpiresAt) {
+    return true;
+  }
+  return new Date(company.jobPackageExpiresAt).getTime() > Date.now();
+}
+
 function planDescription(
   company: CompanyResponse,
   catalogPkg: JobPackageRow | null | undefined,
 ): string {
+  const expiresAt = company.jobPackageExpiresAt
+    ? new Date(company.jobPackageExpiresAt)
+    : null;
+  if (
+    company.jobPackageId &&
+    expiresAt &&
+    expiresAt.getTime() > Date.now()
+  ) {
+    return `Paid plan (monthly term) — posting limits match your plan until ${expiresAt.toLocaleString(
+      undefined,
+      { dateStyle: "medium", timeStyle: "short" },
+    )}.`;
+  }
   const pkg =
     company.jobPackage ??
     (catalogPkg && catalogPkg.id === company.jobPackageId ? catalogPkg : null);
@@ -143,6 +166,7 @@ function EmployerPackageProfileInner() {
   const [embeddedClientSecret, setEmbeddedClientSecret] = useState<string | null>(
     null,
   );
+  const embeddedStripeSessionIdRef = useRef<string | null>(null);
   const [showPaymentSuccessBanner, setShowPaymentSuccessBanner] = useState(false);
 
   const loadError =
@@ -172,7 +196,7 @@ function EmployerPackageProfileInner() {
           sessionId: stripeSessionId,
         });
       } catch {
-        /* webhook may have applied; user can use Refresh */
+        /* confirm-checkout may race; Refresh loads latest */
       }
       if (cancelled) return;
       await queryClient.invalidateQueries({
@@ -197,6 +221,8 @@ function EmployerPackageProfileInner() {
         cancelUrl: `${origin}/dashboard/employee/package/profile?checkout=cancel`,
       });
       if ("clientSecret" in res && res.clientSecret) {
+        embeddedStripeSessionIdRef.current =
+          "sessionId" in res && typeof res.sessionId === "string" ? res.sessionId : null;
         setEmbeddedClientSecret(res.clientSecret);
         setCheckoutId(null);
         return;
@@ -268,8 +294,31 @@ function EmployerPackageProfileInner() {
         <StripeEmbeddedCheckoutModal
           clientSecret={embeddedClientSecret}
           onClose={() => {
+            embeddedStripeSessionIdRef.current = null;
             setEmbeddedClientSecret(null);
             setCheckoutId(null);
+          }}
+          onCheckoutComplete={async () => {
+            const sid = embeddedStripeSessionIdRef.current?.trim();
+            if (accessToken && sid) {
+              try {
+                await syncStripeCheckoutSession(accessToken, { sessionId: sid });
+              } catch (e) {
+                if (e instanceof BackendRequestError) {
+                  setLocalError(e.message);
+                } else if (e instanceof Error) {
+                  setLocalError(e.message);
+                } else {
+                  setLocalError("Could not confirm payment with the server.");
+                }
+              }
+            }
+            embeddedStripeSessionIdRef.current = null;
+            if (user?.id) {
+              await queryClient.invalidateQueries({
+                queryKey: queryKeys.companyBootstrap(user.id),
+              });
+            }
           }}
         />
       ) : null}
@@ -335,6 +384,11 @@ function EmployerPackageProfileInner() {
                 company.jobPackagePlanTitle ??
                 "Default (free tier)"}
             </h2>
+            {company.subscriptionPlanName?.trim() ? (
+              <p className="mt-2 text-sm font-semibold text-slate-600">
+                Subscription on file: {company.subscriptionPlanName.trim()}
+              </p>
+            ) : null}
             {isFetching && !isPending && (
               <p className="mt-1 flex items-center gap-2 text-xs font-medium text-slate-500">
                 <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" aria-hidden />
@@ -373,11 +427,12 @@ function EmployerPackageProfileInner() {
             </p>
             {company.jobPackageExpiresAt && (
               <p className="mt-3 text-sm text-slate-500">
-                Plan ends:{" "}
+                Active until{" "}
                 {new Date(company.jobPackageExpiresAt).toLocaleString(undefined, {
                   dateStyle: "medium",
                   timeStyle: "short",
-                })}
+                })}{" "}
+                (monthly plan term; then limits reset to the free tier unless you purchase again)
               </p>
             )}
           </div>
@@ -423,6 +478,8 @@ function EmployerPackageProfileInner() {
           <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {catalog.map((pkg) => {
               const isCurrent = company.jobPackageId === pkg.id;
+              const planActive = isEmployerPaidJobPackageActive(company);
+              const currentPlanLocked = isCurrent && planActive;
               const canPay = canUseStripeCheckout(pkg);
               const checkoutDetail = stripeCheckoutUnavailableDetail(pkg);
               const postingLimitLabel = pkg.isUnlimited
@@ -465,13 +522,31 @@ function EmployerPackageProfileInner() {
                   <p className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-2xl font-black text-slate-900">
                     <span className="shrink-0">{formatMoney(pkg.priceCents, pkg.currency)}</span>
                     {pkg.priceCents > 0 ? (
-                      <span className="text-sm font-medium text-slate-400">one-time</span>
+                      <span className="text-sm font-medium text-slate-400">per month</span>
                     ) : (
                       <span className="text-sm font-medium text-slate-400">free</span>
                     )}
                   </p>
                   <div className="mt-auto pt-6">
-                    {canPay ? (
+                    {currentPlanLocked ? (
+                      <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-center">
+                        <p className="text-sm font-bold text-emerald-900">This plan is active</p>
+                        {company.jobPackageExpiresAt ? (
+                          <p className="mt-1.5 text-xs font-medium leading-snug text-emerald-900/90">
+                            Included through{" "}
+                            {new Date(company.jobPackageExpiresAt).toLocaleString(undefined, {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            })}
+                            . Purchase becomes available again after this time.
+                          </p>
+                        ) : (
+                          <p className="mt-1.5 text-xs font-medium text-emerald-900/90">
+                            Stripe checkout is disabled for this plan while it is active.
+                          </p>
+                        )}
+                      </div>
+                    ) : canPay ? (
                       <button
                         type="button"
                         disabled={checkoutId === pkg.id}

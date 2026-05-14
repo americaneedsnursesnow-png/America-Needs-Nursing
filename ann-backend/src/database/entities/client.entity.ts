@@ -15,7 +15,7 @@ export class Client {
 
   /**
    * How many free job publishes a company can make per UTC month when they have
-   * no active job package and no active subscription.
+   * no active job package and no named subscription (`subscription_plan_name`).
    * Edited by staff via `PATCH /clients/platform-settings`.
    */
   @Column({

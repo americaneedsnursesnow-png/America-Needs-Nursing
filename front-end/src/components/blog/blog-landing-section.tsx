@@ -28,7 +28,8 @@ export async function BlogLandingSection() {
   if (posts.length === 0) return null;
 
   // Slicing for the 3-column layout
-  const centerFeatured = posts[0];          // The Big Hero (Center)
+  const centerFeatured = posts[0]; // The Big Hero (Center)
+  const centerCover = blogCoverSrc(centerFeatured.coverImageUrl);
   const leftColumnPosts = posts.slice(1, 4); // 3 Posts for Left
   const rightColumnPosts = posts.slice(4, 8); // 4 Posts for Right
 
@@ -61,32 +62,41 @@ export async function BlogLandingSection() {
           {/* 1. LEFT COLUMN (3 Posts) */}
           <div className="lg:col-span-3 space-y-8 order-2 lg:order-1">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b pb-2">Trending</h3>
-            {leftColumnPosts.map((post) => (
-              <Link key={post.id} href={`/blog/${post.slug}`} className="group block">
-                <div className="aspect-[16/10] overflow-hidden rounded-xl bg-slate-200 mb-3">
-                  <img 
-                    src={blogCoverSrc(post.coverImageUrl) || ""} 
-                    alt="" 
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
-                  />
-                </div>
-                <p className="text-[10px] font-bold text-red-600 uppercase mb-1">{formatDate(post.publishedAt)}</p>
-                <h4 className="font-bold leading-tight text-slate-800 group-hover:text-red-600 line-clamp-2 transition-colors">
-                  {post.title}
-                </h4>
-              </Link>
-            ))}
+            {leftColumnPosts.map((post) => {
+              const cover = blogCoverSrc(post.coverImageUrl);
+              return (
+                <Link key={post.id} href={`/blog/${post.slug}`} className="group block">
+                  <div className="aspect-[16/10] overflow-hidden rounded-xl bg-slate-200 mb-3">
+                    {cover ? (
+                      <img
+                        src={cover}
+                        alt=""
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    ) : null}
+                  </div>
+                  <p className="text-[10px] font-bold text-red-600 uppercase mb-1">
+                    {formatDate(post.publishedAt)}
+                  </p>
+                  <h4 className="font-bold leading-tight text-slate-800 group-hover:text-red-600 line-clamp-2 transition-colors">
+                    {post.title}
+                  </h4>
+                </Link>
+              );
+            })}
           </div>
 
           {/* 2. CENTER COLUMN (Main Hero) */}
           <div className="lg:col-span-6 order-1 lg:order-2">
             <Link href={`/blog/${centerFeatured.slug}`} className="group block text-center">
               <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-slate-100 mb-8 shadow-2xl shadow-slate-200">
-                <img 
-                  src={blogCoverSrc(centerFeatured.coverImageUrl) || ""} 
-                  alt="" 
-                  className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105" 
-                />
+                {centerCover ? (
+                  <img
+                    src={centerCover}
+                    alt=""
+                    className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                  />
+                ) : null}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
               </div>
               <div className="px-2">
@@ -106,21 +116,30 @@ export async function BlogLandingSection() {
           {/* 3. RIGHT COLUMN (4 Posts) */}
           <div className="lg:col-span-3 space-y-6 order-3">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b pb-2">Top Stories</h3>
-            {rightColumnPosts.map((post) => (
-              <Link key={post.id} href={`/blog/${post.slug}`} className="group flex gap-6 items-start border-b border-slate-100 pb-5 last:border-0 last:pb-0">
-                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 shadow-sm">
-                  <img src={blogCoverSrc(post.coverImageUrl) || ""} alt="" className="h-full w-full object-cover" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold leading-tight text-slate-900 group-hover:text-red-600 transition-colors line-clamp-2">
-                    {post.title}
-                  </h4>
-                  <p className="text-[10px] font-medium text-slate-400 mt-1 uppercase italic">
-                    {formatDate(post.publishedAt)}
-                  </p>
-                </div>
-              </Link>
-            ))}
+            {rightColumnPosts.map((post) => {
+              const cover = blogCoverSrc(post.coverImageUrl);
+              return (
+                <Link
+                  key={post.id}
+                  href={`/blog/${post.slug}`}
+                  className="group flex gap-6 items-start border-b border-slate-100 pb-5 last:border-0 last:pb-0"
+                >
+                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 shadow-sm">
+                    {cover ? (
+                      <img src={cover} alt="" className="h-full w-full object-cover" />
+                    ) : null}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold leading-tight text-slate-900 group-hover:text-red-600 transition-colors line-clamp-2">
+                      {post.title}
+                    </h4>
+                    <p className="text-[10px] font-medium text-slate-400 mt-1 uppercase italic">
+                      {formatDate(post.publishedAt)}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
 
         </div>

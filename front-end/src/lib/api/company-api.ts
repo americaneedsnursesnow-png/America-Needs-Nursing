@@ -57,11 +57,16 @@ export type CompanyResponse = {
   locationsJson?: CompanyLocationInput[] | null;
   approvalStatus: string;
   jobPackageId?: string | null;
+  /** Last package id from a successful Stripe checkout (may differ from `jobPackageId` after expiry). */
+  lastPurchasedJobPackageId?: string | null;
   /** Snapshot of package name at subscribe / admin assign (see backend `Company.jobPackagePlanTitle`). */
   jobPackagePlanTitle?: string | null;
   jobPackageExpiresAt?: string | null;
   jobPackage?: CompanyJobPackageSummary | null;
   jobPackagePurchaseSnapshot?: JobPackagePurchaseSnapshot | null;
+  /** Named subscription window (admin or Stripe plan purchase); paired with `subscriptionExpiresAt`. */
+  subscriptionPlanName?: string | null;
+  subscriptionExpiresAt?: string | null;
   /**
    * Monthly free publishes (UTC month) when the employer has no active package; from backend `clients` + `companies` counters.
    */

@@ -61,13 +61,16 @@ export class NurseProfilesService {
     limit: number,
   ): Promise<PaginatedResult<NurseProfile>> {
     const { skip, limit: lim, page: p } = normalizePagination(page, limit);
-    const [items, totalItems] = await this.profilesRepository.findAndCount({
-      where: { clientName },
-      relations: ['user'],
-      order: { updatedAt: 'DESC' },
-      skip,
-      take: lim,
-    });
+    /** Admin directory: only real nurse accounts (staff may have a profile for community). */
+    const qb = this.profilesRepository
+      .createQueryBuilder('profile')
+      .innerJoinAndSelect('profile.user', 'user')
+      .where('profile.clientName = :clientName', { clientName })
+      .andWhere('user.role = :nurseRole', { nurseRole: UserRole.NURSE })
+      .orderBy('profile.updatedAt', 'DESC')
+      .skip(skip)
+      .take(lim);
+    const [items, totalItems] = await qb.getManyAndCount();
     for (const row of items) {
       stripUserPasswordForResponse(row.user);
     }
