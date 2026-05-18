@@ -14,12 +14,11 @@ import {
   type PublicUserDto,
 } from '../common/mappers/public-user.mapper';
 import { NurseProfile, User, UserRole } from '../database/entities';
-import { deleteFileIfExists } from '../nurse-profiles/nurse-resume.storage';
+import { deleteStoredFile } from '../nurse-profiles/nurse-resume.storage';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import {
   getUploadsRoot,
-  resolveStoredProfilePhotoFile,
   writeProfilePhoto,
 } from './profile-photo.storage';
 
@@ -150,23 +149,21 @@ export class AccountService {
     }
 
     const uploadsRoot = getUploadsRoot();
-    const oldPath = resolveStoredProfilePhotoFile(
-      uploadsRoot,
-      user.profilePhotoUrl,
-    );
+    const oldUrl = user.profilePhotoUrl;
 
     const { publicPath } = await writeProfilePhoto({
       uploadsRoot,
       userId: user.id,
       buffer: file.buffer,
       ext: detected.ext,
+      contentType: mime.startsWith('image/') ? mime : `image/${detected.ext.slice(1)}`,
     });
 
     user.profilePhotoUrl = publicPath;
     await this.usersRepository.save(user);
 
-    if (oldPath) {
-      await deleteFileIfExists(oldPath);
+    if (oldUrl) {
+      await deleteStoredFile(oldUrl);
     }
 
     return this.mapToPublic(user);
@@ -174,13 +171,8 @@ export class AccountService {
 
   async clearProfilePhoto(payload: JwtUserPayload): Promise<PublicUserDto> {
     const user = await this.findSelf(payload);
-    const uploadsRoot = getUploadsRoot();
-    const oldPath = resolveStoredProfilePhotoFile(
-      uploadsRoot,
-      user.profilePhotoUrl,
-    );
-    if (oldPath) {
-      await deleteFileIfExists(oldPath);
+    if (user.profilePhotoUrl) {
+      await deleteStoredFile(user.profilePhotoUrl);
     }
     user.profilePhotoUrl = null;
     await this.usersRepository.save(user);
@@ -217,24 +209,22 @@ export class AccountService {
     }
 
     const uploadsRoot = getUploadsRoot();
-    const oldPath = resolveStoredProfilePhotoFile(
-      uploadsRoot,
-      user.profileBannerUrl,
-    );
+    const oldUrl = user.profileBannerUrl;
 
     const { publicPath } = await writeProfilePhoto({
       uploadsRoot,
       userId: user.id,
       buffer: file.buffer,
       ext: detected.ext,
+      contentType: mime.startsWith('image/') ? mime : `image/${detected.ext.slice(1)}`,
       basenamePrefix: 'banner',
     });
 
     user.profileBannerUrl = publicPath;
     await this.usersRepository.save(user);
 
-    if (oldPath) {
-      await deleteFileIfExists(oldPath);
+    if (oldUrl) {
+      await deleteStoredFile(oldUrl);
     }
 
     return this.mapToPublic(user);
@@ -242,13 +232,8 @@ export class AccountService {
 
   async clearProfileBanner(payload: JwtUserPayload): Promise<PublicUserDto> {
     const user = await this.findSelf(payload);
-    const uploadsRoot = getUploadsRoot();
-    const oldPath = resolveStoredProfilePhotoFile(
-      uploadsRoot,
-      user.profileBannerUrl,
-    );
-    if (oldPath) {
-      await deleteFileIfExists(oldPath);
+    if (user.profileBannerUrl) {
+      await deleteStoredFile(user.profileBannerUrl);
     }
     user.profileBannerUrl = null;
     await this.usersRepository.save(user);

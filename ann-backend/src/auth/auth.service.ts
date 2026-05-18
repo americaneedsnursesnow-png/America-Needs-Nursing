@@ -20,7 +20,11 @@ import {
 } from '../common/mappers/public-user.mapper';
 import { getConfigNumber } from '../common/utils/env.util';
 import { Client, NurseProfile, User, UserRole } from '../database/entities';
-import { escapeAttr, normaliseFrontendBase } from '../mail/email-layouts';
+import {
+  escapeAttr,
+  normaliseFrontendBase,
+  renderTransactionalEmail,
+} from '../mail/email-layouts';
 import { MailService } from '../mail/mail.service';
 import { NewsletterService } from '../newsletter/newsletter.service';
 import type { JwtUserPayload } from './types/jwt-user-payload';
@@ -141,15 +145,21 @@ export class AuthService {
         );
         const signInUrl = `${origin}/sign-in`;
         const jobsUrl = `${origin}/jobs`;
-        const html = `
+        const innerHtml = `
       <p>Hello,</p>
       <p>Your nurse account on <strong>${this.escapeHtml(
         clientName,
       )}</strong> was created successfully (${this.escapeHtml(email)}).</p>
       <p>You can sign in to browse jobs, apply, and use the nurse community when available.</p>
       <p><a href="${escapeAttr(signInUrl)}">Sign in</a> · <a href="${escapeAttr(jobsUrl)}">Browse open jobs</a></p>
-      <p>If you did not create this account, please contact support.</p>
+      <p>If you did not create this account, you can ignore this email.</p>
     `;
+        const html = renderTransactionalEmail({
+          title: 'Your account is ready',
+          innerHtml,
+          frontendBase: origin,
+          preheader: 'Sign in to browse nursing jobs',
+        });
         await this.mailService.sendHtmlTo(
           email,
           'Welcome — your nurse account is ready',
@@ -254,7 +264,10 @@ export class AuthService {
     await this.cacheManager.set(otpKey, payload, otpTtlMs);
 
     const minutes = Math.ceil(otpTtlMs / 60_000);
-    const html =
+    const origin = normaliseFrontendBase(
+      this.config.get<string>('FRONTEND_URL'),
+    );
+    const innerHtml =
       options.purpose === 'forgot'
         ? `
       <p>Hello,</p>
@@ -277,6 +290,16 @@ export class AuthService {
       options.purpose === 'forgot'
         ? 'Reset your password — verification code'
         : 'Your verification code';
+
+    const html = renderTransactionalEmail({
+      title:
+        options.purpose === 'forgot'
+          ? 'Password reset code'
+          : 'Verification code',
+      innerHtml,
+      frontendBase: origin,
+      preheader: `Your code is ${code}`,
+    });
 
     try {
       await this.mailService.sendHtmlTo(email, subject, html);

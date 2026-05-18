@@ -80,7 +80,9 @@ export class BlogPublishNotificationsService {
       frontendBase,
     });
 
-    await this.mailService.sendBulkBcc(emails, subject, html);
+    await this.mailService.sendBulkBcc(emails, subject, html, {
+      listUnsubscribeUrl: `${frontendBase}/sign-in`,
+    });
     this.logger.log(
       `Blog publish notification sent to ${emails.length} newsletter subscriber(s) for post ${postId}`,
     );

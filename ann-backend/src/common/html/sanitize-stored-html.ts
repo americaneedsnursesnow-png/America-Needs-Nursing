@@ -1,5 +1,7 @@
 import sanitizeHtml from 'sanitize-html';
 
+import { getFileStorage } from '../../storage/file-storage.registry';
+
 const JOB_TAGS = [
   'p',
   'br',
@@ -38,22 +40,12 @@ const JOB_RICH_OPTIONS: sanitizeHtml.IOptions = {
 };
 
 function isTrustedBlogImageSrc(src: string): boolean {
-  const t = src.trim();
-  if (!t || /^javascript:/i.test(t) || /^data:/i.test(t)) {
-    return false;
-  }
-  if (t.startsWith('/files/blog-images/')) {
-    return true;
-  }
   try {
-    if (/^https?:\/\//i.test(t)) {
-      const u = new URL(t);
-      return u.pathname.includes('/files/blog-images/');
-    }
+    return getFileStorage().isTrustedBlogImageSrc(src);
   } catch {
-    return false;
+    const t = src.trim();
+    return t.startsWith('/files/blog-images/');
   }
-  return false;
 }
 
 const BLOG_RICH_OPTIONS: sanitizeHtml.IOptions = {

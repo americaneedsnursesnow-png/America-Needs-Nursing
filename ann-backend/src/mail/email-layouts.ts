@@ -27,6 +27,53 @@ export function escapeAttr(s: string): string {
     .replace(/>/g, '&gt;');
 }
 
+/**
+ * Transactional messages (OTP, welcome, job published) — simple branded shell, not marketing-heavy.
+ */
+export function renderTransactionalEmail(params: {
+  title: string;
+  innerHtml: string;
+  frontendBase: string;
+  preheader?: string;
+}): string {
+  const { title, innerHtml, frontendBase, preheader } = params;
+  const t = escapeHtml(title);
+  const homeUrl = frontendBase;
+  const preheaderBlock = preheader
+    ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${escapeHtml(preheader)}</div>`
+    : '';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="color-scheme" content="light"/>
+  <meta name="supported-color-schemes" content="light"/>
+  <title>${t}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f8fafc;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+${preheaderBlock}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f8fafc;">
+  <tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="max-width:560px;width:100%;background-color:#ffffff;border-radius:8px;border:1px solid #e2e8f0;">
+      <tr><td style="padding:24px 28px 8px 28px;border-bottom:3px solid #dc2626;">
+        <p style="margin:0;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#64748b;">America Needs Nurses</p>
+        <h1 style="margin:8px 0 0 0;font-size:20px;line-height:1.3;font-weight:700;color:#0f172a;">${t}</h1>
+      </td></tr>
+      <tr><td style="padding:24px 28px;font-size:16px;line-height:1.6;color:#334155;">
+        ${innerHtml}
+      </td></tr>
+      <tr><td style="padding:0 28px 24px 28px;font-size:12px;line-height:1.5;color:#94a3b8;border-top:1px solid #f1f5f9;">
+        <p style="margin:16px 0 0 0;">This is an automated message from <a href="${escapeAttr(homeUrl)}" style="color:#64748b;">America Needs Nurses</a>. Please do not reply to this email.</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`;
+}
+
 function resolvePublicAssetUrl(
   url: string | null | undefined,
   frontendBase: string,

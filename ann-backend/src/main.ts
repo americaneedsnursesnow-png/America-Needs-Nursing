@@ -18,6 +18,7 @@ import {
   getCorsOrigins,
 } from './common/utils/env.util';
 import { getUploadsRoot } from './nurse-profiles/nurse-resume.storage';
+import { FileStorageService } from './storage/file-storage.service';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -71,12 +72,15 @@ async function bootstrap() {
     );
   }
 
-  const uploadsRoot = getUploadsRoot();
-  app.useStaticAssets(uploadsRoot, {
-    prefix: '/files/',
-    index: false,
-    fallthrough: true,
-  });
+  const fileStorage = app.get(FileStorageService);
+  if (fileStorage.isLocalDriver()) {
+    const uploadsRoot = getUploadsRoot();
+    app.useStaticAssets(uploadsRoot, {
+      prefix: '/files/',
+      index: false,
+      fallthrough: true,
+    });
+  }
   // Bind Socket.IO to the same HTTP server Express uses; optional Redis adapter for multi-instance.
   const useRedisSocketAdapter = getConfigBoolean(
     config,

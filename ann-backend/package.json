@@ -26,6 +26,7 @@
     "migration:generate": "npm run typeorm -- migration:generate -d src/database/data-source.ts",
     "user:create": "ts-node -r tsconfig-paths/register --project tsconfig.cli.json src/cli/create-user.ts",
     "seed:demo": "ts-node -r tsconfig-paths/register --project tsconfig.cli.json src/cli/seed-demo-content.ts",
+    "storage:migrate-s3": "ts-node -r tsconfig-paths/register --project tsconfig.cli.json src/cli/migrate-uploads-to-s3.ts",
     "load-test:three-stages": "ts-node -r tsconfig-paths/register --project tsconfig.cli.json src/cli/run-load-test-three-stages.ts",
     "load-test:auth-register": "cross-env LOAD_TEST_MODE=register npm run load-test:three-stages",
     "load-test:auth-login": "cross-env LOAD_TEST_MODE=login npm run load-test:three-stages",
@@ -33,6 +34,7 @@
     "load-test:auth-login:spoof": "cross-env LOAD_TEST_MODE=login LOAD_TEST_SPOOF_FORWARDED_FOR=true npm run load-test:three-stages"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1048.0",
     "@aws-sdk/client-ses": "^3.1037.0",
     "@keyv/redis": "^5.1.6",
     "@nestjs/bullmq": "^11.0.4",
@@ -76,8 +78,8 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
-    "@types/compression": "^1.7.5",
     "@types/bcrypt": "^6.0.0",
+    "@types/compression": "^1.7.5",
     "@types/express": "^5.0.0",
     "@types/helmet": "^0.0.48",
     "@types/jest": "^30.0.0",

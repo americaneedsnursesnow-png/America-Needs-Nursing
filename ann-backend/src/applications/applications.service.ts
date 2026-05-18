@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { createReadStream } from 'fs';
+import type { Readable } from 'stream';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import type { JwtUserPayload } from '../auth/types/jwt-user-payload';
@@ -161,7 +161,7 @@ export class ApplicationsService {
     user: JwtUserPayload,
     applicationId: string,
   ): Promise<{
-    stream: ReturnType<typeof createReadStream>;
+    stream: Readable;
     filename: string;
   }> {
     if (user.role !== UserRole.COMPANY) {

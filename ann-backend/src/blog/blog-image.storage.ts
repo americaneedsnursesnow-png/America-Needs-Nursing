@@ -1,10 +1,10 @@
 import { createHash } from 'crypto';
-import { mkdir, writeFile } from 'fs/promises';
 import * as path from 'path';
 import {
   FILES_URL_PREFIX,
   getUploadsRoot,
 } from '../nurse-profiles/nurse-resume.storage';
+import { getFileStorage } from '../storage/file-storage.registry';
 
 export { getUploadsRoot };
 
@@ -52,20 +52,23 @@ export async function writeBlogImage(params: {
   clientName: string;
   buffer: Buffer;
   ext: string;
+  contentType: string;
 }): Promise<{ absolutePath: string; publicPath: string; filename: string }> {
   const clientFolder = safeBlogClientFolder(params.clientName);
-  const dir = path.join(params.uploadsRoot, BLOG_IMAGES_SEGMENT, clientFolder);
-  await mkdir(dir, { recursive: true });
   const hash = createHash('sha256')
     .update(params.buffer)
     .digest('hex')
     .slice(0, 12);
   const filename = `img-${hash}${params.ext}`;
-  const absolutePath = path.join(dir, filename);
-  await writeFile(absolutePath, params.buffer);
+  const objectKey = `${BLOG_IMAGES_SEGMENT}/${clientFolder}/${filename}`;
+  const publicPath = await getFileStorage().putObject({
+    objectKey,
+    buffer: params.buffer,
+    contentType: params.contentType,
+  });
   return {
-    absolutePath,
+    absolutePath: path.join(params.uploadsRoot, objectKey),
     filename,
-    publicPath: publicBlogImagePath(clientFolder, filename),
+    publicPath,
   };
 }

@@ -1,12 +1,23 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
+import type { SendMailOptions } from 'nodemailer';
 import * as nodemailer from 'nodemailer';
 
 import { uniqueEmailRecipients } from './email-recipients.util';
+import { htmlToPlainText } from './html-to-plain-text';
+import {
+  buildListUnsubscribeHeader,
+  extractEmailAddress,
+} from './mail-envelope.util';
 
 const BCC_CHUNK = 45;
 type MailProvider = 'smtp' | 'ses';
+
+export type MailSendOptions = {
+  /** HTTPS unsubscribe URL for bulk/marketing (List-Unsubscribe header). */
+  listUnsubscribeUrl?: string;
+};
 
 @Injectable()
 export class MailService {
@@ -14,11 +25,15 @@ export class MailService {
   private readonly transporter: nodemailer.Transporter | null;
   private readonly sesClient: SESClient | null;
   private readonly provider: MailProvider | null;
+  private readonly sesConfigurationSet: string | undefined;
 
   constructor(private readonly config: ConfigService) {
     this.transporter = null;
     this.sesClient = null;
     this.provider = null;
+    this.sesConfigurationSet =
+      this.config.get<string>('MAIL_SES_CONFIGURATION_SET')?.trim() ||
+      undefined;
 
     const configuredProvider = (
       this.config.get<string>('MAIL_PROVIDER')?.trim().toLowerCase() ?? 'smtp'
@@ -94,43 +109,84 @@ export class MailService {
     );
   }
 
+  private getReplyTo(): string | undefined {
+    return this.config.get<string>('MAIL_REPLY_TO')?.trim() || undefined;
+  }
+
+  private buildHeaders(options?: MailSendOptions): Record<string, string> | undefined {
+    const listUnsub = buildListUnsubscribeHeader(
+      options?.listUnsubscribeUrl,
+      this.config.get<string>('MAIL_LIST_UNSUBSCRIBE_MAILTO')?.trim(),
+    );
+    if (!listUnsub) return undefined;
+    return { 'List-Unsubscribe': listUnsub };
+  }
+
+  private async deliver(
+    mail: SendMailOptions,
+    destinations: string[],
+  ): Promise<void> {
+    const html = typeof mail.html === 'string' ? mail.html : '';
+    const text =
+      typeof mail.text === 'string' && mail.text.length > 0
+        ? mail.text
+        : htmlToPlainText(html);
+
+    const payload: SendMailOptions = {
+      ...mail,
+      text,
+      replyTo: mail.replyTo ?? this.getReplyTo(),
+    };
+
+    if (this.provider === 'smtp' && this.transporter) {
+      await this.transporter.sendMail(payload);
+      return;
+    }
+
+    if (this.provider === 'ses' && this.sesClient) {
+      const compileTransport = nodemailer.createTransport({
+        streamTransport: true,
+        buffer: true,
+        newline: 'unix',
+      });
+      const info = await compileTransport.sendMail(payload);
+      const raw = info.message as Buffer;
+      const cmd = new SendRawEmailCommand({
+        Source: extractEmailAddress(String(payload.from)),
+        Destinations: destinations,
+        RawMessage: { Data: raw },
+        ...(this.sesConfigurationSet
+          ? { ConfigurationSetName: this.sesConfigurationSet }
+          : {}),
+      });
+      await this.sesClient.send(cmd);
+    }
+  }
+
   /** Single-recipient transactional mail (e.g. password reset). */
-  async sendHtmlTo(to: string, subject: string, html: string): Promise<void> {
+  async sendHtmlTo(
+    to: string,
+    subject: string,
+    html: string,
+    options?: MailSendOptions,
+  ): Promise<void> {
     if (!this.provider) {
       this.logger.warn(`Email not configured; skipping email to ${to}`);
       return;
     }
     const from = this.getFromAddress();
+    const recipient = to.trim();
     try {
-      if (this.provider === 'smtp' && this.transporter) {
-        await this.transporter.sendMail({
+      await this.deliver(
+        {
           from,
-          to: to.trim(),
+          to: recipient,
           subject,
           html,
-        });
-      } else if (this.provider === 'ses' && this.sesClient) {
-        await this.sesClient.send(
-          new SendEmailCommand({
-            Source: from,
-            Destination: {
-              ToAddresses: [to.trim()],
-            },
-            Message: {
-              Subject: {
-                Data: subject,
-                Charset: 'UTF-8',
-              },
-              Body: {
-                Html: {
-                  Data: html,
-                  Charset: 'UTF-8',
-                },
-              },
-            },
-          }),
-        );
-      }
+          headers: this.buildHeaders(options),
+        },
+        [recipient],
+      );
     } catch (err) {
       this.logger.error(
         `Failed to send mail to ${to}`,
@@ -148,6 +204,7 @@ export class MailService {
     recipients: string[],
     subject: string,
     html: string,
+    options?: MailSendOptions,
   ): Promise<void> {
     const unique = uniqueEmailRecipients(recipients);
     if (!this.provider || unique.length === 0) {
@@ -155,41 +212,23 @@ export class MailService {
     }
 
     const from = this.getFromAddress();
+    const envelopeFrom = extractEmailAddress(from);
 
     for (let i = 0; i < unique.length; i += BCC_CHUNK) {
       const bcc = unique.slice(i, i + BCC_CHUNK);
+      const destinations = [envelopeFrom, ...bcc];
       try {
-        if (this.provider === 'smtp' && this.transporter) {
-          await this.transporter.sendMail({
+        await this.deliver(
+          {
             from,
             to: from,
             bcc,
             subject,
             html,
-          });
-        } else if (this.provider === 'ses' && this.sesClient) {
-          await this.sesClient.send(
-            new SendEmailCommand({
-              Source: from,
-              Destination: {
-                ToAddresses: [from],
-                BccAddresses: bcc,
-              },
-              Message: {
-                Subject: {
-                  Data: subject,
-                  Charset: 'UTF-8',
-                },
-                Body: {
-                  Html: {
-                    Data: html,
-                    Charset: 'UTF-8',
-                  },
-                },
-              },
-            }),
-          );
-        }
+            headers: this.buildHeaders(options),
+          },
+          destinations,
+        );
       } catch (err) {
         this.logger.error(
           `Failed to send mail batch ${i / BCC_CHUNK + 1}`,

@@ -27,11 +27,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { UserRole } from '../database/entities';
-import { writeFile } from 'node:fs/promises';
-import { existsSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
-import { getUploadsRoot } from '../nurse-profiles/nurse-resume.storage';
-import { publicUrlForNurseCommunityImage } from './nurse-community-image.storage';
+import { writeNurseCommunityImage } from './nurse-community-image.storage';
 import { CommunityChatService } from './community-chat.service';
 import { CreateNurseCommunityDto } from './dto/create-nurse-community.dto';
 import { UpdateNurseCommunityDto } from './dto/update-nurse-community.dto';
@@ -177,23 +173,22 @@ export class NurseCommunityController {
     if (!community.isOwner && user.role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only the community owner can upload an image');
     }
-    const sub = join(getUploadsRoot(), 'nurse-communities');
-    if (!existsSync(sub)) {
-      mkdirSync(sub, { recursive: true });
-    }
     const ext =
       file.mimetype === 'image/png'
-        ? 'png'
+        ? '.png'
         : file.mimetype === 'image/webp'
-          ? 'webp'
-          : 'jpg';
-    const name = `${id.replace(/-/g, '')}-${Date.now()}.${ext}`;
-    const dest = join(sub, name);
+          ? '.webp'
+          : '.jpg';
     if (!file.buffer) {
       throw new Error('Missing file buffer');
     }
-    await writeFile(dest, file.buffer);
-    const url = publicUrlForNurseCommunityImage(name);
+    const mime = (file.mimetype ?? '').toLowerCase();
+    const { publicPath: url } = await writeNurseCommunityImage({
+      communityId: id,
+      buffer: file.buffer,
+      ext,
+      contentType: mime.startsWith('image/') ? mime : `image/${ext.slice(1)}`,
+    });
     await this.nurseCommunityService.update(user, id, { imageUrl: url });
     return { imageUrl: url };
   }

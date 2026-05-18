@@ -33,6 +33,7 @@ import { RateLimitModule } from './rate-limit/rate-limit.module';
 import { UsersModule } from './users/users.module';
 import { ClientsModule } from './clients/clients.module';
 import { NurseImportModule } from './nurse-import/nurse-import.module';
+import { StorageModule } from './storage/storage.module';
 
 function envTrim(
   config: ConfigService,
@@ -69,6 +70,7 @@ function typeOrmPgPoolExtra(config: ConfigService): Record<string, unknown> {
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    StorageModule,
     LoggerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

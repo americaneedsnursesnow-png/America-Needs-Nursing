@@ -106,7 +106,9 @@ export class NewsletterBroadcastMailProcessor extends WorkerHost {
         return;
       }
 
-      await this.mailService.sendBulkBcc(emails, subject, wrappedHtml);
+      await this.mailService.sendBulkBcc(emails, subject, wrappedHtml, {
+        listUnsubscribeUrl: `${frontendBase}/sign-in`,
+      });
       broadcast.status = NewsletterBroadcastStatus.SENT;
       broadcast.sentAt = new Date();
       broadcast.recipientCount = emails.length;

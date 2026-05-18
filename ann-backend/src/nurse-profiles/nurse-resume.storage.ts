@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
-import { mkdir, unlink, writeFile } from 'fs/promises';
 import * as path from 'path';
+
+import { getFileStorage } from '../storage/file-storage.registry';
 
 export const NURSE_RESUMES_SEGMENT = 'nurse-resumes';
 
@@ -61,34 +62,45 @@ export async function writeNurseResumePdf(params: {
   folderSlug: string;
   buffer: Buffer;
 }): Promise<{ absolutePath: string; publicPath: string; filename: string }> {
-  const dir = path.join(
-    params.uploadsRoot,
-    NURSE_RESUMES_SEGMENT,
-    params.folderSlug,
-  );
-  await mkdir(dir, { recursive: true });
+  void params.uploadsRoot;
   const hash = createHash('sha256')
     .update(params.buffer)
     .digest('hex')
     .slice(0, 16);
   const filename = `resume-${hash}.pdf`;
-  const absolutePath = path.join(dir, filename);
-  await writeFile(absolutePath, params.buffer);
-  return {
-    absolutePath,
-    filename,
-    publicPath: publicResumePath(params.folderSlug, filename),
-  };
+  const objectKey = `${NURSE_RESUMES_SEGMENT}/${params.folderSlug}/${filename}`;
+  const storage = getFileStorage();
+  const publicPath = await storage.putObject({
+    objectKey,
+    buffer: params.buffer,
+    contentType: 'application/pdf',
+  });
+  const absolutePath =
+    localAbsolutePathFromKey(params.uploadsRoot, objectKey) ?? objectKey;
+  return { absolutePath, filename, publicPath };
 }
 
-export async function deleteFileIfExists(filePath: string): Promise<void> {
-  try {
-    await unlink(filePath);
-  } catch (e: unknown) {
-    const code =
-      e && typeof e === 'object' && 'code' in e
-        ? (e as NodeJS.ErrnoException).code
-        : undefined;
-    if (code !== 'ENOENT') throw e;
+function localAbsolutePathFromKey(
+  uploadsRoot: string,
+  objectKey: string,
+): string | null {
+  const resolved = path.resolve(uploadsRoot, objectKey);
+  const rootResolved = path.resolve(uploadsRoot);
+  const rel = path.relative(rootResolved, resolved);
+  if (rel.startsWith('..') || path.isAbsolute(rel)) {
+    return null;
   }
+  return resolved;
+}
+
+/** Delete by DB-stored path (`/files/...` or S3/CDN URL). */
+export async function deleteStoredFile(
+  storedUrl: string | null | undefined,
+): Promise<void> {
+  await getFileStorage().deleteByStoredUrl(storedUrl);
+}
+
+/** @deprecated Use deleteStoredFile with the public URL from the database. */
+export async function deleteFileIfExists(filePath: string): Promise<void> {
+  await deleteStoredFile(filePath);
 }

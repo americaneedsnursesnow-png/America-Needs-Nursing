@@ -27,7 +27,12 @@ import { sanitizeJobRichHtml } from '../common/html/sanitize-stored-html';
 import { uniqueSlugFromTitle } from '../common/slug.util';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
-import { escapeAttr, escapeHtml, normaliseFrontendBase } from '../mail/email-layouts';
+import {
+  escapeAttr,
+  escapeHtml,
+  normaliseFrontendBase,
+  renderTransactionalEmail,
+} from '../mail/email-layouts';
 import { MailService } from '../mail/mail.service';
 
 @Injectable()
@@ -447,7 +452,7 @@ export class JobsService {
       this.config.get<string>('FRONTEND_URL'),
     );
     const jobUrl = `${origin}/jobs/${encodeURIComponent(job.slug)}`;
-    const html = `
+    const innerHtml = `
       <p>Hello,</p>
       <p>Your job listing <strong>${escapeHtml(
         job.title,
@@ -457,6 +462,12 @@ export class JobsService {
       <p><a href="${escapeAttr(jobUrl)}">View the public job page</a></p>
       <p>You can edit or close the listing from your employer dashboard.</p>
     `;
+    const html = renderTransactionalEmail({
+      title: 'Your job is live',
+      innerHtml,
+      frontendBase: origin,
+      preheader: `${job.title} is now published`,
+    });
     try {
       await this.mailService.sendHtmlTo(to, 'Your job is live', html);
     } catch (err: unknown) {

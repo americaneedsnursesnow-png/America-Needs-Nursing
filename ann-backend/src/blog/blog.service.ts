@@ -23,10 +23,9 @@ import {
   BLOG_PUBLISH_MAIL_JOB,
   BLOG_PUBLISH_MAIL_QUEUE,
 } from '../queues/queue.constants';
-import { deleteFileIfExists } from '../nurse-profiles/nurse-resume.storage';
+import { deleteStoredFile } from '../nurse-profiles/nurse-resume.storage';
 import {
   getUploadsRoot,
-  resolveStoredBlogImageFile,
   writeBlogImage,
 } from './blog-image.storage';
 import { CreateBlogPostDto } from './dto/create-blog-post.dto';
@@ -108,15 +107,11 @@ export class BlogService {
 
     if (dto.title !== undefined) post.title = dto.title.trim();
     if (dto.body !== undefined) post.body = sanitizeBlogRichHtml(dto.body);
-    let oldCoverPath: string | null = null;
+    let oldCoverUrl: string | null = null;
     if (dto.coverImageUrl !== undefined) {
       const next = dto.coverImageUrl?.trim() ?? null;
       if (next !== post.coverImageUrl) {
-        oldCoverPath = resolveStoredBlogImageFile(
-          getUploadsRoot(),
-          post.coverImageUrl,
-          user.clientName,
-        );
+        oldCoverUrl = post.coverImageUrl;
         post.coverImageUrl = next;
       }
     }
@@ -142,8 +137,8 @@ export class BlogService {
 
     const saved = await this.blogRepository.save(post);
 
-    if (oldCoverPath) {
-      await deleteFileIfExists(oldCoverPath);
+    if (oldCoverUrl) {
+      await deleteStoredFile(oldCoverUrl);
     }
 
     if (!wasPublished && saved.status === BlogPostStatus.PUBLISHED) {
@@ -237,6 +232,7 @@ export class BlogService {
       clientName: user.clientName,
       buffer: file.buffer,
       ext: detected.ext,
+      contentType: mime.startsWith('image/') ? mime : `image/${detected.ext.slice(1)}`,
     });
     return { url: publicPath };
   }

@@ -7,6 +7,7 @@ import type { FileFilterCallback } from 'multer';
 import type { Request } from 'express';
 
 import { getUploadsRoot } from '../nurse-profiles/nurse-resume.storage';
+import { getFileStorage } from '../storage/file-storage.registry';
 
 const UPLOAD_SUBDIR = 'nurse-communities';
 
@@ -65,6 +66,24 @@ export const nurseCommunityImageFileFilter = (
   cb(null, true);
 };
 
+export const NURSE_COMMUNITIES_SEGMENT = 'nurse-communities';
+
 export function publicUrlForNurseCommunityImage(filename: string): string {
-  return `/files/nurse-communities/${filename}`;
+  return `/files/${NURSE_COMMUNITIES_SEGMENT}/${filename}`;
+}
+
+export async function writeNurseCommunityImage(params: {
+  communityId: string;
+  buffer: Buffer;
+  ext: string;
+  contentType: string;
+}): Promise<{ publicPath: string; filename: string }> {
+  const name = `${params.communityId.replace(/-/g, '')}-${Date.now()}${params.ext}`;
+  const objectKey = `${NURSE_COMMUNITIES_SEGMENT}/${name}`;
+  const publicPath = await getFileStorage().putObject({
+    objectKey,
+    buffer: params.buffer,
+    contentType: params.contentType,
+  });
+  return { publicPath, filename: name };
 }

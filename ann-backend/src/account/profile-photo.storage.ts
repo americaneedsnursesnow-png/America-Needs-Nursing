@@ -1,10 +1,10 @@
 import { createHash } from 'crypto';
-import { mkdir, writeFile } from 'fs/promises';
 import * as path from 'path';
 import {
   FILES_URL_PREFIX,
   getUploadsRoot,
 } from '../nurse-profiles/nurse-resume.storage';
+import { getFileStorage } from '../storage/file-storage.registry';
 
 export { getUploadsRoot };
 
@@ -43,26 +43,26 @@ export async function writeProfilePhoto(params: {
   userId: string;
   buffer: Buffer;
   ext: string;
+  contentType: string;
   /** File basename prefix (default `photo`; use `banner` for profile banners). */
   basenamePrefix?: string;
 }): Promise<{ absolutePath: string; publicPath: string; filename: string }> {
-  const dir = path.join(
-    params.uploadsRoot,
-    PROFILE_PHOTOS_SEGMENT,
-    params.userId,
-  );
-  await mkdir(dir, { recursive: true });
+  void params.uploadsRoot;
   const hash = createHash('sha256')
     .update(params.buffer)
     .digest('hex')
     .slice(0, 12);
   const prefix = params.basenamePrefix ?? 'photo';
   const filename = `${prefix}-${hash}${params.ext}`;
-  const absolutePath = path.join(dir, filename);
-  await writeFile(absolutePath, params.buffer);
+  const objectKey = `${PROFILE_PHOTOS_SEGMENT}/${params.userId}/${filename}`;
+  const publicPath = await getFileStorage().putObject({
+    objectKey,
+    buffer: params.buffer,
+    contentType: params.contentType,
+  });
   return {
-    absolutePath,
+    absolutePath: path.join(params.uploadsRoot, objectKey),
     filename,
-    publicPath: publicProfilePhotoPath(params.userId, filename),
+    publicPath,
   };
 }

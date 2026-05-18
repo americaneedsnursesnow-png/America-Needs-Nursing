@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { createReadStream, existsSync } from 'fs';
+import type { Readable } from 'stream';
 import { Repository } from 'typeorm';
 import type { JwtUserPayload } from '../auth/types/jwt-user-payload';
 import { NurseProfile, User, UserRole } from '../database/entities';
@@ -17,12 +17,12 @@ import {
 } from '../common/types/paginated';
 import { UpdateNurseProfileDto } from './dto/update-nurse-profile.dto';
 import {
-  deleteFileIfExists,
+  deleteStoredFile,
   getUploadsRoot,
   nurseResumeFolderSlug,
-  resolveStoredResumeFile,
   writeNurseResumePdf,
 } from './nurse-resume.storage';
+import { getFileStorage } from '../storage/file-storage.registry';
 
 const MAX_RESUME_BYTES = 5 * 1024 * 1024;
 
@@ -122,21 +122,19 @@ export class NurseProfilesService {
 
   async clearResume(user: JwtUserPayload): Promise<NurseProfile> {
     const profile = await this.getMine(user);
-    const uploadsRoot = getUploadsRoot();
-    const oldPath = resolveStoredResumeFile(uploadsRoot, profile.resumeUrl);
-    if (oldPath) {
-      await deleteFileIfExists(oldPath);
+    if (profile.resumeUrl) {
+      await deleteStoredFile(profile.resumeUrl);
     }
     profile.resumeUrl = null;
     return this.profilesRepository.save(profile);
   }
 
   async getResumeReadStream(user: JwtUserPayload): Promise<{
-    stream: ReturnType<typeof createReadStream>;
+    stream: Readable;
     filename: string;
   }> {
     const profile = await this.getMine(user);
-    return this.resumeFileStreamFromProfile(profile);
+    return await this.resumeFileStreamFromProfile(profile);
   }
 
   /**
@@ -146,7 +144,7 @@ export class NurseProfilesService {
     nurseUserId: string,
     clientName: string,
   ): Promise<{
-    stream: ReturnType<typeof createReadStream>;
+    stream: Readable;
     filename: string;
   }> {
     const profile = await this.profilesRepository.findOne({
@@ -155,29 +153,24 @@ export class NurseProfilesService {
     if (!profile) {
       throw new NotFoundException('Nurse profile not found');
     }
-    return this.resumeFileStreamFromProfile(profile);
+    return await this.resumeFileStreamFromProfile(profile);
   }
 
-  private resumeFileStreamFromProfile(profile: NurseProfile): {
-    stream: ReturnType<typeof createReadStream>;
+  private async resumeFileStreamFromProfile(
+    profile: NurseProfile,
+  ): Promise<{
+    stream: Readable;
     filename: string;
-  } {
+  }> {
     const ref = profile.resumeUrl?.trim();
     if (!ref) {
       throw new NotFoundException('No resume on file');
     }
-    if (/^https?:\/\//i.test(ref)) {
-      throw new NotFoundException('Resume is stored as an external link');
-    }
-    const uploadsRoot = getUploadsRoot();
-    const abs = resolveStoredResumeFile(uploadsRoot, ref);
-    if (!abs || !existsSync(abs)) {
+    try {
+      return await getFileStorage().getReadStream(ref, 'resume.pdf');
+    } catch {
       throw new NotFoundException('Resume file missing');
     }
-    return {
-      stream: createReadStream(abs),
-      filename: 'resume.pdf',
-    };
   }
 
   async uploadResumePdf(
@@ -213,7 +206,7 @@ export class NurseProfilesService {
 
     const profile = await this.getMine(user);
     const uploadsRoot = getUploadsRoot();
-    const oldPath = resolveStoredResumeFile(uploadsRoot, profile.resumeUrl);
+    const oldUrl = profile.resumeUrl;
 
     const folderSlug = nurseResumeFolderSlug(dbUser.fullName, user.sub);
     const { publicPath } = await writeNurseResumePdf({
@@ -225,8 +218,8 @@ export class NurseProfilesService {
     profile.resumeUrl = publicPath;
     await this.profilesRepository.save(profile);
 
-    if (oldPath) {
-      await deleteFileIfExists(oldPath);
+    if (oldUrl) {
+      await deleteStoredFile(oldUrl);
     }
 
     return profile;

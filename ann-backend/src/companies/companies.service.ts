@@ -24,8 +24,12 @@ import {
   User,
   UserRole,
 } from '../database/entities';
+import {
+  normaliseFrontendBase,
+  renderTransactionalEmail,
+} from '../mail/email-layouts';
 import { MailService } from '../mail/mail.service';
-import { deleteFileIfExists } from '../nurse-profiles/nurse-resume.storage';
+import { deleteStoredFile } from '../nurse-profiles/nurse-resume.storage';
 import { JobPackagesService } from '../job-packages/job-packages.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { SetCompanyApprovalDto } from './dto/set-company-approval.dto';
@@ -36,7 +40,6 @@ import { UpdateCompanyDto } from './dto/update-company.dto';
 import { ClientsService } from '../clients/clients.service';
 import {
   getUploadsRoot,
-  resolveStoredCompanyAssetFile,
   writeCompanyImage,
 } from './company-image.storage';
 
@@ -357,12 +360,11 @@ export class CompaniesService {
     if (!employer?.email) {
       return;
     }
-    const base =
-      this.config.get<string>('FRONTEND_URL')?.trim() ||
-      'http://localhost:3001';
-    const origin = base.replace(/\/$/, '');
+    const origin = normaliseFrontendBase(
+      this.config.get<string>('FRONTEND_URL'),
+    );
     const signInUrl = `${origin}/sign-in`;
-    const html = `
+    const innerHtml = `
       <p>Hello,</p>
       <p>Your company <strong>${this.escapeHtml(
         company.name,
@@ -372,6 +374,12 @@ export class CompaniesService {
       <p>You can sign in to publish jobs and manage your company profile.</p>
       <p><a href="${signInUrl}">Sign in</a></p>
     `;
+    const html = renderTransactionalEmail({
+      title: 'Company verified',
+      innerHtml,
+      frontendBase: origin,
+      preheader: `${company.name} is approved`,
+    });
     await this.mailService.sendHtmlTo(
       employer.email,
       `Your company "${company.name}" is verified`,
@@ -627,12 +635,7 @@ export class CompaniesService {
 
     const company = await this.getMine(user);
     const uploadsRoot = getUploadsRoot();
-    const oldPath = resolveStoredCompanyAssetFile(
-      uploadsRoot,
-      company[field],
-      user.clientName,
-      kind,
-    );
+    const oldUrl = company[field];
 
     const { publicPath } = await writeCompanyImage({
       uploadsRoot,
@@ -640,13 +643,14 @@ export class CompaniesService {
       kind,
       buffer: file.buffer,
       ext: detected.ext,
+      contentType: mime.startsWith('image/') ? mime : `image/${detected.ext.slice(1)}`,
     });
 
     company[field] = publicPath;
     await this.companiesRepository.save(company);
 
-    if (oldPath) {
-      await deleteFileIfExists(oldPath);
+    if (oldUrl) {
+      await deleteStoredFile(oldUrl);
     }
 
     return { url: publicPath };
