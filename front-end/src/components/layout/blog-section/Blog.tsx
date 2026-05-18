@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { SiteContentWrapper } from "@/components/layout/SiteContentWrapper";
 import { blogCoverSrc } from "@/lib/blog-cover-image";
+import { plainTextPreviewFromHtml } from "@/lib/html-plain-text";
+import { BlogSponsoredChip } from "@/components/blog/blog-sponsored-chip";
 import { getPublicBlogPosts } from "@/lib/api/public-api";
 import type { PublicBlogPost } from "@/lib/api/types";
 import { ArrowRight } from "lucide-react";
@@ -72,21 +74,31 @@ export async function BlogSection() {
                       {post.title.slice(0, 1)}
                     </span>
                   )}
-                  <div
-                    className="absolute left-4 top-4 z-10 rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg"
-                    style={{ backgroundColor: "var(--color-button)" }}
-                  >
-                    {formatDate(post.publishedAt)}
+                  <div className="absolute left-4 top-4 z-10 flex flex-wrap items-center gap-2">
+                    <div
+                      className="rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg"
+                      style={{ backgroundColor: "var(--color-button)" }}
+                    >
+                      {formatDate(post.publishedAt)}
+                    </div>
+                    {post.sponsored ? <BlogSponsoredChip /> : null}
                   </div>
                 </div>
 
                 <div className="flex flex-grow flex-col p-7">
+                  {post.sponsored ? (
+                    <div className="mb-2">
+                      <BlogSponsoredChip />
+                    </div>
+                  ) : null}
                   <h3 className="mb-3 line-clamp-2 text-xl font-bold text-gray-900 transition-colors duration-300 group-hover:text-[var(--color-button)]">
                     {post.title}
                   </h3>
                   <p className="mb-8 line-clamp-3 text-sm leading-relaxed text-gray-500">
-                    {post.excerpt?.trim() ||
-                      post.body.slice(0, 160).replace(/\s+/g, " ").trim() + "…"}
+                    {plainTextPreviewFromHtml(
+                      post.excerpt?.trim() || post.body,
+                      160,
+                    )}
                   </p>
 
                   <div className="mt-auto">

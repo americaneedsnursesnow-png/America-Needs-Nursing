@@ -5,6 +5,8 @@ import Link from "next/link";
 import { SiteContentWrapper } from "@/components/layout/SiteContentWrapper";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { blogCoverSrc } from "@/lib/blog-cover-image";
+import { plainTextPreviewFromHtml } from "@/lib/html-plain-text";
+import { BlogSponsoredChip } from "@/components/blog/blog-sponsored-chip";
 import { getPublicBlogPostsCached } from "@/lib/api/public-data-cache";
 
 function formatDate(iso: string | null): string {
@@ -75,9 +77,12 @@ export async function BlogLandingSection() {
                       />
                     ) : null}
                   </div>
-                  <p className="text-[10px] font-bold text-red-600 uppercase mb-1">
-                    {formatDate(post.publishedAt)}
-                  </p>
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <p className="text-[10px] font-bold text-red-600 uppercase">
+                      {formatDate(post.publishedAt)}
+                    </p>
+                    {post.sponsored ? <BlogSponsoredChip /> : null}
+                  </div>
                   <h4 className="font-bold leading-tight text-slate-800 group-hover:text-red-600 line-clamp-2 transition-colors">
                     {post.title}
                   </h4>
@@ -89,7 +94,7 @@ export async function BlogLandingSection() {
           {/* 2. CENTER COLUMN (Main Hero) */}
           <div className="lg:col-span-6 order-1 lg:order-2">
             <Link href={`/blog/${centerFeatured.slug}`} className="group block text-center">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-slate-100 mb-8 shadow-2xl shadow-slate-200">
+              <div className="relative aspect-video overflow-hidden rounded-[2rem] bg-slate-100 mb-8 shadow-2xl shadow-slate-200 sm:aspect-[4/3]">
                 {centerCover ? (
                   <img
                     src={centerCover}
@@ -100,14 +105,22 @@ export async function BlogLandingSection() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
               </div>
               <div className="px-2">
-                <span className="inline-block bg-red-50 text-red-600 text-[10px] font-black px-4 py-1 rounded-full uppercase tracking-widest mb-4">
+                <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
+                <span className="inline-block bg-red-50 text-red-600 text-[10px] font-black px-4 py-1 rounded-full uppercase tracking-widest">
                   Feature Story
                 </span>
+                {centerFeatured.sponsored ? <BlogSponsoredChip /> : null}
+                </div>
                 <h3 className="text-3xl md:text-4xl lg:text-5xl font-black leading-[0.95] tracking-tighter text-slate-900 group-hover:text-red-600 transition-colors">
                   {centerFeatured.title}
                 </h3>
                 <p className="mt-4 text-lg text-slate-500 line-clamp-3 italic max-w-xl mx-auto font-medium">
-                  "{centerFeatured.excerpt || centerFeatured.body.slice(0, 160)}..."
+                  &ldquo;
+                  {plainTextPreviewFromHtml(
+                    centerFeatured.excerpt || centerFeatured.body,
+                    160,
+                  )}
+                  &rdquo;
                 </p>
               </div>
             </Link>
@@ -129,7 +142,12 @@ export async function BlogLandingSection() {
                       <img src={cover} alt="" className="h-full w-full object-cover" />
                     ) : null}
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
+                    {post.sponsored ? (
+                      <div className="mb-1">
+                        <BlogSponsoredChip />
+                      </div>
+                    ) : null}
                     <h4 className="text-sm font-bold leading-tight text-slate-900 group-hover:text-red-600 transition-colors line-clamp-2">
                       {post.title}
                     </h4>

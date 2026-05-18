@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Calendar, Share2, Clock } from "lucide-react";
+import { ArrowLeft, Calendar, Clock } from "lucide-react";
 
 import { BlogSponsoredAside } from "@/components/blog/blog-sponsored-aside";
+import { BlogSponsoredChip } from "@/components/blog/blog-sponsored-chip";
 import { JobRichBody } from "@/components/jobs/job-rich-body";
+import { ResponsiveHeroCover } from "@/components/layout/responsive-hero-cover";
 import { blogCoverSrc } from "@/lib/blog-cover-image";
 import {
   emptyPaginated,
@@ -35,7 +37,9 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
   try {
     const [fetchedPost, fetchedList] = await Promise.all([
       getPublicBlogPostBySlug(slug),
-      getPublicBlogPosts(1, 40).catch(() => emptyPaginated<PublicBlogPost>(1, 40)),
+      getPublicBlogPosts(1, 40, { cache: "no-store" }).catch(() =>
+        emptyPaginated<PublicBlogPost>(1, 40),
+      ),
     ]);
     post = fetchedPost;
     allPosts = fetchedList.items;
@@ -47,17 +51,20 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-[#fdfdfd] text-slate-900">
-      {/* --- Full Width Hero Banner --- */}
-      <div className="relative w-full h-[30vh] md:h-[40vh] lg:h-[50vh] overflow-hidden bg-slate-900">
+      {/* --- Full Width Hero Banner (shorter on very small screens = less decode / faster LCP) --- */}
+      <div className="relative w-full h-[min(22vh,200px)] min-h-[132px] overflow-hidden bg-slate-900 sm:h-[28vh] sm:min-h-[160px] md:h-[36vh] md:min-h-0 lg:h-[46vh] xl:h-[50vh]">
         {coverSrc ? (
           <>
-            <img
-              src={coverSrc}
-              alt={post.title}
-              className="w-full h-full object-cover object-center scale-105 animate-in fade-in zoom-in duration-1000"
-            />
+            <div className="absolute inset-0">
+              <ResponsiveHeroCover
+                src={coverSrc}
+                alt={post.title}
+                priority
+                imageClassName="object-cover object-center max-md:object-[center_20%] max-md:scale-100 md:scale-105 md:animate-in md:fade-in md:zoom-in md:duration-1000"
+              />
+            </div>
             {/* Subtle Overlay for better text readability and depth */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
+            <div className="absolute inset-0 z-[1] bg-gradient-to-t from-black/60 via-transparent to-black/30" />
           </>
         ) : (
           <div className="w-full h-full bg-slate-100 flex items-center justify-center">
@@ -79,13 +86,13 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
         </div>
 
         {/* Hero Content Overlay (Optional Title Integration) */}
-        <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 text-white">
+        <div className="absolute bottom-0 left-0 z-10 w-full p-6 md:p-12 text-white">
             <div className="max-w-7xl mx-auto">
-                {post.sponsored && (
-                    <span className="inline-block px-3 py-1 bg-red-600 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+                {post.sponsored ? (
+                    <span className="mb-4 inline-block bg-red-600 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white">
                         Sponsored Content
                     </span>
-                )}
+                ) : null}
                 {/* Date and Reading Time */}
                 <div className="flex items-center gap-4 text-xs font-medium text-white/80 uppercase tracking-widest mb-1">
                     <span className="flex items-center gap-1.5"><Calendar size={14} /> {formatDate(post.publishedAt)}</span>
@@ -103,6 +110,14 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
                 
                 <article className="bg-white p-6 md:p-12 shadow-2xl shadow-slate-200/50 rounded-2xl md:rounded-3xl border border-slate-100">
                     <header className="mb-10">
+                        {post.sponsored ? (
+                          <div className="mb-4 flex flex-wrap items-center gap-2">
+                            <BlogSponsoredChip className="px-2 py-1 text-[10px]" />
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                              Sponsored content
+                            </span>
+                          </div>
+                        ) : null}
                         <h1 className="text-3xl md:text-3xl lg:text-4xl font-black tracking-tighter leading-[1.1] text-slate-900 mb-6 ">
                             {post.title}
                         </h1>

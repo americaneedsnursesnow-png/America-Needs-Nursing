@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Briefcase, Info,Clock, Heart, Users, ArrowLeft, Mail, Phone, ExternalLink, HeartPulse, ShieldCheck, MapPin } from "lucide-react";
 import { CompanyFeaturedAside } from "@/components/companies/company-featured-aside";
 import { JobRichBody } from "@/components/jobs/job-rich-body";
+import { ResponsiveHeroCover } from "@/components/layout/responsive-hero-cover";
 import { PublicPagination } from "@/components/public/public-pagination";
 import { blogCoverSrc } from "@/lib/blog-cover-image";
 import {
@@ -79,15 +80,18 @@ export default async function CompanyDetailPage({ params, searchParams }: PagePr
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-20">
       
       {/* --- Dynamic Banner Section --- */}
-      <div className="relative h-64 md:h-80 w-full overflow-hidden">
+      <div className="relative h-40 w-full overflow-hidden sm:h-56 md:h-72 lg:h-80">
         {heroSrc ? (
           <>
-            <img 
-              src={heroSrc} 
-              alt="" 
-              className="h-full w-full object-cover" 
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute inset-0">
+              <ResponsiveHeroCover
+                src={heroSrc}
+                alt=""
+                priority
+                imageClassName="object-cover object-center max-sm:object-[center_30%]"
+              />
+            </div>
+            <div className="absolute inset-0 z-[1] bg-gradient-to-t from-black/60 to-transparent" />
           </>
         ) : (
           /* --- Specialized Nursing/Healthcare Fallback --- */

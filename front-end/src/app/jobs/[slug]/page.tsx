@@ -4,6 +4,7 @@ import { ArrowLeft, Briefcase, MapPin, Building2, DollarSign, Clock, Star, Calen
 
 import { JobApplySidebar } from "@/components/jobs/job-apply-sidebar";
 import { JobRichBody } from "@/components/jobs/job-rich-body";
+import { ResponsiveHeroCover } from "@/components/layout/responsive-hero-cover";
 import { blogCoverSrc } from "@/lib/blog-cover-image";
 import { getPublicJobBySlug } from "@/lib/api/public-api";
 import {
@@ -48,13 +49,16 @@ export default async function JobDetailPage({ params }: PageProps) {
       {/* ===== Hero Banner ===== */}
       {heroSrc ? (
         <div className="relative w-full">
-          <div className="relative h-52 w-full overflow-hidden bg-gray-100 sm:h-64 md:h-72 lg:h-80">
-            <img
-              src={heroSrc}
-              alt={`${companyName} banner`}
-              className="h-full w-full object-cover object-center"
-            />
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 via-black/25 to-transparent" aria-hidden />
+          <div className="relative h-36 w-full overflow-hidden bg-gray-100 sm:h-48 md:h-60 lg:h-72">
+            <div className="absolute inset-0">
+              <ResponsiveHeroCover
+                src={heroSrc}
+                alt={`${companyName} banner`}
+                priority
+                imageClassName="object-cover object-center max-sm:object-[center_25%]"
+              />
+            </div>
+            <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-32 bg-gradient-to-b from-black/60 via-black/25 to-transparent" aria-hidden />
 
             <div className="absolute inset-x-0 top-0 z-10 px-4 pt-4 sm:px-6 sm:pt-6 md:px-8 md:pt-8">
               <Link

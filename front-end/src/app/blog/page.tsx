@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowRight, ChevronRight, ChevronLeft, Newspaper } from "lucide-react";
 import { PublicPagination } from "@/components/public/public-pagination";
 import { blogCoverSrc } from "@/lib/blog-cover-image";
+import { plainTextPreviewFromHtml } from "@/lib/html-plain-text";
+import { BlogSponsoredChip } from "@/components/blog/blog-sponsored-chip";
 import { emptyPaginated, getPublicBlogPosts } from "@/lib/api/public-api";
 import type { PublicBlogPost } from "@/lib/api/types";
 
@@ -100,7 +102,10 @@ export default async function BlogListPage({ searchParams }: PageProps) {
                         <img src={cover} alt="" className="h-full w-full object-cover" />
                       ) : null}
                   </div>
-                  <p className="text-[10px] font-bold text-red-600 uppercase mb-1 tracking-tight">{formatDate(post.publishedAt)}</p>
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <p className="text-[10px] font-bold text-red-600 uppercase tracking-tight">{formatDate(post.publishedAt)}</p>
+                    {post.sponsored ? <BlogSponsoredChip /> : null}
+                  </div>
                   <h3 className="text-base font-bold leading-tight group-hover:text-red-600 underline-offset-2 decoration-2">{post.title}</h3>
                 </Link>
               );
@@ -117,7 +122,7 @@ export default async function BlogListPage({ searchParams }: PageProps) {
           `}>
             {mainFeature && (
               <Link href={`/blog/${mainFeature.slug}`} className="group block">
-                <div className="relative aspect-[4/3] w-full overflow-hidden mb-6 bg-slate-100">
+                <div className="relative aspect-video w-full overflow-hidden mb-6 bg-slate-100 sm:aspect-[4/3]">
                     {mainCover ? (
                       <img
                         src={mainCover}
@@ -130,11 +135,19 @@ export default async function BlogListPage({ searchParams }: PageProps) {
                     </div>
                 </div>
                 <div className="text-center md:px-6">
+                    {mainFeature.sponsored ? (
+                      <div className="mb-4 flex justify-center">
+                        <BlogSponsoredChip className="px-2 py-1 text-[10px]" />
+                      </div>
+                    ) : null}
                     <h2 className="text-4xl md:text-6xl font-black text-red-600 tracking-tighter leading-[0.9] mb-6 group-hover:text-red-600 transition-colors">
                         {mainFeature.title}
                     </h2>
                     <p className="text-xl text-slate-600 leading-relaxed font-serif italic first-letter:text-5xl first-letter:font-bold first-letter:mr-2 first-letter:float-left">
-                        {mainFeature.excerpt || mainFeature.body.slice(0, 200)}...
+                        {plainTextPreviewFromHtml(
+                          mainFeature.excerpt || mainFeature.body,
+                          200,
+                        )}
                     </p>
                     <div className="mt-8 flex justify-center">
                         <span className="border-y-2 border-slate-900 py-2 px-8 text-sm font-black uppercase tracking-widest group-hover:bg-slate-900 group-hover:text-white transition-colors">
@@ -159,7 +172,12 @@ export default async function BlogListPage({ searchParams }: PageProps) {
                         <img src={cover} alt="" className="h-full w-full object-cover grayscale opacity-80" />
                       ) : null}
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
+                      {post.sponsored ? (
+                        <div className="mb-1">
+                          <BlogSponsoredChip className="scale-90 origin-left" />
+                        </div>
+                      ) : null}
                       <h3 className="text-xs font-bold leading-tight group-hover:text-red-600 group-hover:underline">{post.title}</h3>
                       <p className="text-[9px] font-bold text-slate-400 mt-2 uppercase tracking-tighter">{formatDate(post.publishedAt)}</p>
                   </div>
@@ -187,7 +205,10 @@ export default async function BlogListPage({ searchParams }: PageProps) {
                                   ) : null}
                               </div>
                               <div className="p-10 md:w-1/2 flex flex-col justify-center text-white">
-                                  <span className="text-red-500 text-[10px] font-black tracking-[0.3em] uppercase mb-4">Special Report</span>
+                                  <div className="mb-4 flex flex-wrap items-center gap-2">
+                                    <span className="text-red-500 text-[10px] font-black tracking-[0.3em] uppercase">Special Report</span>
+                                    {bottomFeature.sponsored ? <BlogSponsoredChip /> : null}
+                                  </div>
                                   <h3 className="text-3xl font-black leading-[1.1] mb-6">{bottomFeature.title}</h3>
                                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest group-hover:translate-x-2 transition-transform">
                                       View Report <ArrowRight size={16} />
@@ -206,7 +227,10 @@ export default async function BlogListPage({ searchParams }: PageProps) {
                           <div className="space-y-8 flex-1">
                               {bottomList.length > 0 ? bottomList.map(post => (
                                   <Link key={post.id} href={`/blog/${post.slug}`} className="block group border-l-2 border-transparent hover:border-red-600 pl-4 transition-all">
-                                      <p className="text-[10px] font-bold text-red-600 mb-1">{formatDate(post.publishedAt)}</p>
+                                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                                        <p className="text-[10px] font-bold text-red-600">{formatDate(post.publishedAt)}</p>
+                                        {post.sponsored ? <BlogSponsoredChip className="scale-90" /> : null}
+                                      </div>
                                       <h4 className="font-bold text-sm leading-snug group-hover:text-red-600">{post.title}</h4>
                                   </Link>
                               )) : (

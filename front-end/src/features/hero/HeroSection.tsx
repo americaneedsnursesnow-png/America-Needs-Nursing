@@ -19,15 +19,16 @@ export function HeroSection() {
         Fixed: On mobile, we use 'absolute' and 'object-cover' so the image 
         stretches to match the height of the content.
       */}
-      <div className="absolute inset-0 z-0 lg:relative lg:block">
+      <div className="absolute inset-x-0 top-0 z-0 h-[min(32vh,260px)] overflow-hidden sm:h-[min(36vh,300px)] lg:relative lg:z-0 lg:block lg:h-auto lg:overflow-visible">
         <Image
           src={image.src}
           alt={image.alt}
           width={image.width}
           height={image.height}
           priority
-          className="h-full w-full object-cover lg:h-auto lg:max-w-none lg:object-contain"
-          sizes="100vw"
+          fetchPriority="high"
+          className="h-full w-full object-cover object-center max-lg:object-[center_24%] lg:h-auto lg:max-w-none lg:object-contain"
+          sizes="(max-width: 1024px) 100vw, min(1440px, 96vw)"
         />
         {/* Dark overlay for mobile readability */}
       </div>

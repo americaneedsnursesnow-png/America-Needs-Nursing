@@ -22,6 +22,57 @@ function readStr(
   return null;
 }
 
+function readPublicSponsored(o: Record<string, unknown>): boolean {
+  const v = o.sponsored;
+  if (v === true || v === 1) return true;
+  if (v === false || v === 0) return false;
+  if (typeof v === "string") {
+    const s = v.trim().toLowerCase();
+    return s === "true" || s === "1" || s === "yes";
+  }
+  return false;
+}
+
+function readPublishedAtIso(o: Record<string, unknown>): string | null {
+  const v = o.publishedAt ?? o.published_at;
+  if (v == null) return null;
+  if (typeof v === "string") return v;
+  if (v instanceof Date) return v.toISOString();
+  return null;
+}
+
+/** Normalize public blog JSON (camel/snake, sponsored flag, dates). */
+export function normalizePublicBlogPost(raw: unknown): PublicBlogPost {
+  if (!raw || typeof raw !== "object") {
+    return {
+      id: "",
+      title: "",
+      slug: "",
+      body: "",
+      coverImageUrl: null,
+      excerpt: null,
+      metaTitle: null,
+      metaDescription: null,
+      sponsored: false,
+      publishedAt: null,
+    };
+  }
+  const o = raw as Record<string, unknown>;
+  return {
+    id: String(o.id ?? ""),
+    title: String(o.title ?? ""),
+    slug: String(o.slug ?? ""),
+    body: typeof o.body === "string" ? o.body : "",
+    coverImageUrl: readStr(o, "coverImageUrl", "cover_image_url"),
+    excerpt: readStr(o, "excerpt"),
+    metaTitle: readStr(o, "metaTitle", "meta_title"),
+    metaDescription: readStr(o, "metaDescription", "meta_description"),
+    sponsored: readPublicSponsored(o),
+    publishedAt: readPublishedAtIso(o),
+    createdAt: readStr(o, "createdAt", "created_at") ?? undefined,
+  };
+}
+
 function readLocations(
   o: Record<string, unknown>,
 ): PublicCompany["locations"] {
@@ -308,21 +359,29 @@ export async function getPublicCompanyBySlug(
 export async function getPublicBlogPosts(
   page = 1,
   limit = 12,
+  fetchInit?: RequestInit,
 ): Promise<Paginated<PublicBlogPost>> {
   const q = `page=${encodeURIComponent(String(page))}&limit=${encodeURIComponent(String(limit))}`;
   const raw = await fetchJson<unknown>(`/public/blog/posts?${q}`, {
     next: { revalidate: 120 },
+    ...fetchInit,
   });
-  return asPaginated<PublicBlogPost>(raw, page, limit);
+  const p = asPaginated<PublicBlogPost>(raw, page, limit);
+  return {
+    ...p,
+    items: p.items.map((item) => normalizePublicBlogPost(item)),
+  };
 }
 
 export async function getPublicBlogPostBySlug(
   slug: string,
 ): Promise<PublicBlogPost> {
-  return fetchJson<PublicBlogPost>(
+  const raw = await fetchJson<unknown>(
     `/public/blog/posts/${encodeURIComponent(slug)}`,
-    { next: { revalidate: 120 } },
+    /** Fresh flags (e.g. sponsored) after admin edits; avoids long-lived stale RSC fetch. */
+    { cache: "no-store" },
   );
+  return normalizePublicBlogPost(raw);
 }
 
 /** Public footer / marketing: subscribe email to tenant newsletter list. */
