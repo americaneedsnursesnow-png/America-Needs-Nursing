@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   FileTypeValidator,
   Get,
   MaxFileSizeValidator,
@@ -80,5 +81,14 @@ export class BlogController {
     @Body() dto: UpdateBlogPostDto,
   ) {
     return this.blogService.update(user, id, dto);
+  }
+
+  @Delete('posts/:id')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CONTENT_ADMIN)
+  delete(
+    @CurrentUser() user: JwtUserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.blogService.delete(user, id);
   }
 }

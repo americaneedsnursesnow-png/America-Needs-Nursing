@@ -12,6 +12,7 @@ import {
   Upload,
   X,
   MoreVertical,
+  Trash2,
 } from "lucide-react";
 
 import { RichTextEditor } from "@/components/rich-text-editor/rich-text-editor.lazy";
@@ -86,6 +87,24 @@ export default function AdminBlogSystem() {
 
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const coverFileRef = useRef<HTMLInputElement>(null);
+  const activeMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        activeMenuRef.current &&
+        !activeMenuRef.current.contains(event.target as Node)
+      ) {
+        setActionMenuOpenId(null);
+      }
+    }
+    if (actionMenuOpenId !== null) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [actionMenuOpenId]);
 
   const adjustHeight = (ref: RefObject<HTMLTextAreaElement | null>) => {
     if (ref.current) {
@@ -324,7 +343,7 @@ export default function AdminBlogSystem() {
                 />
               </div>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto min-h-[260px]">
               {listLoading ? (
                 <div className="flex justify-center py-16 text-slate-500">
                   <Loader2 className="h-8 w-8 animate-spin" />
@@ -383,11 +402,14 @@ export default function AdminBlogSystem() {
                           </span>
                         </td>
                         <td className="px-10 py-8 text-right">
-                          <div className="relative inline-flex">
+                          <div
+                            ref={actionMenuOpenId === post.id ? activeMenuRef : undefined}
+                            className="relative inline-flex"
+                          >
                             <button
                               type="button"
                               onClick={() => handleToggleActionMenu(post.id)}
-                              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:scale-95"
                               aria-expanded={actionMenuOpenId === post.id}
                               aria-haspopup="menu"
                             >
@@ -395,24 +417,24 @@ export default function AdminBlogSystem() {
                               <MoreVertical size={18} />
                             </button>
                             {actionMenuOpenId === post.id ? (
-                              <div className="absolute right-0 top-full z-20 mt-2 w-44 overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-2xl">
+                              <div className="absolute right-0 top-full z-20 mt-2 w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-top-1 duration-150">
                                 <button
                                   type="button"
                                   onClick={() => {
                                     handleEdit(post);
                                     setActionMenuOpenId(null);
                                   }}
-                                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-slate-700 transition hover:bg-slate-50 active:bg-slate-100"
                                 >
-                                  <Edit3 size={16} />
+                                  <Edit3 size={16} className="text-slate-400" />
                                   Edit blog
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleDeletePrompt(post)}
-                                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-red-600 transition hover:bg-red-50 active:bg-red-100/50"
                                 >
-                                  <span className="text-base">🗑️</span>
+                                  <Trash2 size={16} className="text-red-500" />
                                   Delete blog
                                 </button>
                               </div>
@@ -430,34 +452,39 @@ export default function AdminBlogSystem() {
             ) : null}
           </div>
           {deleteTarget ? (
-            <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-              <div className="w-full max-w-xl rounded-[32px] border border-slate-200 bg-white p-8 shadow-2xl">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-lg font-bold text-slate-900">Delete blog post</p>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                      Are you sure you want to delete <span className="font-semibold text-slate-900">{deleteTarget.title}</span>? This action cannot be undone.
+            <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="w-full max-w-lg rounded-[32px] border border-slate-100 bg-white p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
+                    <Trash2 size={22} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-black tracking-tight text-slate-900">
+                      Delete blog post
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                      Are you sure you want to delete <span className="font-semibold text-slate-800">{deleteTarget.title}</span>? This action is permanent and cannot be undone.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={handleCancelDelete}
-                    className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-900"
+                    className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
                     aria-label="Close delete confirmation"
                   >
                     <X size={18} />
                   </button>
                 </div>
                 {deleteError ? (
-                  <p className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                  <p className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
                     {deleteError}
                   </p>
                 ) : null}
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
                   <button
                     type="button"
                     onClick={handleCancelDelete}
-                    className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    className="rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
                   >
                     Cancel
                   </button>
@@ -465,7 +492,7 @@ export default function AdminBlogSystem() {
                     type="button"
                     onClick={handleConfirmDelete}
                     disabled={deleting}
-                    className="rounded-2xl bg-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                    className="rounded-2xl bg-red-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-600/10 transition hover:bg-red-700 active:scale-95 disabled:opacity-60"
                   >
                     {deleting ? "Deleting…" : "Yes, delete"}
                   </button>

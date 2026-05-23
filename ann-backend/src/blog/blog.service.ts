@@ -81,7 +81,7 @@ export class BlogService {
     );
 
     if (saved.status === BlogPostStatus.PUBLISHED) {
-      void this.enqueueBlogPublishMail(saved.id).catch((err: unknown) => {
+      await this.enqueueBlogPublishMail(saved.id).catch((err: unknown) => {
         this.logger.error(
           'enqueueBlogPublishMail failed',
           err instanceof Error ? err.stack : String(err),
@@ -147,7 +147,7 @@ export class BlogService {
     }
 
     if (!wasPublished && saved.status === BlogPostStatus.PUBLISHED) {
-      void this.enqueueBlogPublishMail(saved.id).catch((err: unknown) => {
+      await this.enqueueBlogPublishMail(saved.id).catch((err: unknown) => {
         this.logger.error(
           'enqueueBlogPublishMail failed',
           err instanceof Error ? err.stack : String(err),
@@ -156,6 +156,27 @@ export class BlogService {
     }
 
     return saved;
+  }
+
+  async delete(user: JwtUserPayload, id: string): Promise<void> {
+    const post = await this.blogRepository.findOne({
+      where: { id, clientName: user.clientName },
+    });
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+    const coverImageUrl = post.coverImageUrl;
+    await this.blogRepository.remove(post);
+    if (coverImageUrl) {
+      const coverPath = resolveStoredBlogImageFile(
+        getUploadsRoot(),
+        coverImageUrl,
+        user.clientName,
+      );
+      if (coverPath) {
+        await deleteFileIfExists(coverPath);
+      }
+    }
   }
 
   private async enqueueBlogPublishMail(postId: string): Promise<void> {
@@ -167,6 +188,7 @@ export class BlogService {
         removeOnComplete: 1000,
         attempts: 3,
         backoff: { type: 'exponential', delay: 10_000 },
+        delay: 3000,
       },
     );
     this.logger.log(`Blog publish mail job queued for post ${postId}`);

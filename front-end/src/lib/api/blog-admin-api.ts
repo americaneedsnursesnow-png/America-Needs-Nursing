@@ -1,4 +1,4 @@
-import { authedJson, authedMultipartJson } from "./authed-client";
+import { authedJson, authedMultipartJson, authedVoid } from "./authed-client";
 
 /** Matches Nest `BlogPostStatus`. */
 export type BlogPostStatus = "draft" | "published";
@@ -88,5 +88,14 @@ export async function updateBlogPost(
   return authedJson<AdminBlogPost>(`/blog/posts/${postId}`, accessToken, {
     method: "PATCH",
     body: JSON.stringify(body),
+  });
+}
+
+export async function deleteBlogPost(
+  accessToken: string,
+  postId: string,
+): Promise<void> {
+  return authedVoid(`/blog/posts/${postId}`, accessToken, {
+    method: "DELETE",
   });
 }
