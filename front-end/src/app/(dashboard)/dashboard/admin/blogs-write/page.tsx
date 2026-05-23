@@ -11,6 +11,7 @@ import {
   Image as ImageIcon,
   Upload,
   X,
+  MoreVertical,
 } from "lucide-react";
 
 import { RichTextEditor } from "@/components/rich-text-editor/rich-text-editor.lazy";
@@ -18,6 +19,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { blogCoverSrc } from "@/lib/blog-cover-image";
 import {
   createBlogPost,
+  deleteBlogPost,
   listAdminBlogPosts,
   updateBlogPost,
   uploadBlogPostImage,
@@ -75,6 +77,10 @@ export default function AdminBlogSystem() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
+  const [actionMenuOpenId, setActionMenuOpenId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdminBlogPost | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   /** Remount rich editor when starting a fresh post (no id). */
   const [newBodyEditorKey, setNewBodyEditorKey] = useState(0);
 
@@ -187,6 +193,42 @@ export default function AdminBlogSystem() {
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleToggleActionMenu = (postId: string) => {
+    setActionMenuOpenId((current) => (current === postId ? null : postId));
+  };
+
+  const handleDeletePrompt = (post: AdminBlogPost) => {
+    setDeleteError(null);
+    setActionMenuOpenId(null);
+    setDeleteTarget(post);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteError(null);
+    setDeleteTarget(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!accessToken || !deleteTarget) return;
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      await deleteBlogPost(accessToken, deleteTarget.id);
+      setDeleteTarget(null);
+      await loadPosts();
+    } catch (e) {
+      setDeleteError(
+        e instanceof BackendRequestError
+          ? e.message
+          : e instanceof Error
+            ? e.message
+            : "Delete failed.",
+      );
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -341,14 +383,41 @@ export default function AdminBlogSystem() {
                           </span>
                         </td>
                         <td className="px-10 py-8 text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleEdit(post)}
-                            className="rounded-xl p-3 text-slate-400 transition-all hover:bg-red-50 hover:text-red-600"
-                            aria-label="Edit post"
-                          >
-                            <Edit3 size={20} />
-                          </button>
+                          <div className="relative inline-flex">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleActionMenu(post.id)}
+                              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                              aria-expanded={actionMenuOpenId === post.id}
+                              aria-haspopup="menu"
+                            >
+                              Actions
+                              <MoreVertical size={18} />
+                            </button>
+                            {actionMenuOpenId === post.id ? (
+                              <div className="absolute right-0 top-full z-20 mt-2 w-44 overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-2xl">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleEdit(post);
+                                    setActionMenuOpenId(null);
+                                  }}
+                                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                                >
+                                  <Edit3 size={16} />
+                                  Edit blog
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeletePrompt(post)}
+                                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                                >
+                                  <span className="text-base">🗑️</span>
+                                  Delete blog
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -360,6 +429,50 @@ export default function AdminBlogSystem() {
               <p className="py-12 text-center text-slate-500">No posts yet.</p>
             ) : null}
           </div>
+          {deleteTarget ? (
+            <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+              <div className="w-full max-w-xl rounded-[32px] border border-slate-200 bg-white p-8 shadow-2xl">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-lg font-bold text-slate-900">Delete blog post</p>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                      Are you sure you want to delete <span className="font-semibold text-slate-900">{deleteTarget.title}</span>? This action cannot be undone.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCancelDelete}
+                    className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-900"
+                    aria-label="Close delete confirmation"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+                {deleteError ? (
+                  <p className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                    {deleteError}
+                  </p>
+                ) : null}
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={handleCancelDelete}
+                    className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmDelete}
+                    disabled={deleting}
+                    className="rounded-2xl bg-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                  >
+                    {deleting ? "Deleting…" : "Yes, delete"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : (
         <div className="animate-in fade-in duration-500">
