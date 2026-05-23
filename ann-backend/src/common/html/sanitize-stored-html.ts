@@ -26,12 +26,14 @@ const JOB_TAGS = [
 ] as const;
 
 /** Rich job / community post HTML (TipTap-style); no images. Links limited to http(s)/mailto. */
+const JOB_RICH_ATTRIBUTES: Record<string, sanitizeHtml.AllowedAttribute[]> = {
+  '*': ['class'] as sanitizeHtml.AllowedAttribute[],
+  a: ['href', 'rel', 'target', 'title'] as sanitizeHtml.AllowedAttribute[],
+};
+
 const JOB_RICH_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: [...JOB_TAGS],
-  allowedAttributes: {
-    '*': ['class'],
-    a: ['href', 'rel', 'target', 'title'],
-  },
+  allowedAttributes: JOB_RICH_ATTRIBUTES,
   allowedSchemesByTag: {
     a: ['http', 'https', 'mailto'],
   },
@@ -60,8 +62,8 @@ const BLOG_RICH_OPTIONS: sanitizeHtml.IOptions = {
   ...JOB_RICH_OPTIONS,
   allowedTags: [...JOB_TAGS, 'img'],
   allowedAttributes: {
-    ...JOB_RICH_OPTIONS.allowedAttributes,
-    '*': [...(JOB_RICH_OPTIONS.allowedAttributes['*'] ?? []), 'style'],
+    ...JOB_RICH_ATTRIBUTES,
+    '*': [...JOB_RICH_ATTRIBUTES['*'], 'style'],
     img: ['src', 'alt', 'width', 'height', 'loading', 'decoding', 'class', 'style'],
   },
   allowedStyles: {
