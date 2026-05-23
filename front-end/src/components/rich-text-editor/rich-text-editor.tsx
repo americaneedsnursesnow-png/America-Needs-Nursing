@@ -264,12 +264,11 @@ export function RichTextEditor({
         },
       },
       onUpdate: ({ editor: ed }) => {
-        // Use getText() instead of getHTML() to save simple text to the database.
-        // The blockSeparator ensures that paragraphs are separated by new lines (\n).
-        const simpleText = ed.getText({ blockSeparator: "\n" });
-        
-        // Handle empty state: if the text is just whitespace, save as empty string
-        onChange(simpleText.trim().length === 0 ? "" : simpleText);
+        const html = ed.getHTML();
+        const text = ed.getText({ blockSeparator: "\n" });
+
+        // Preserve rich HTML for blog/newsletter content, but save empty strings for whitespace-only input.
+        onChange(text.trim().length === 0 ? "" : html);
       },
     },
     [extensions],

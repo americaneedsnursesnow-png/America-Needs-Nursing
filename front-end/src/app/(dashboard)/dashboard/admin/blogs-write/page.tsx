@@ -79,7 +79,7 @@ export default function AdminBlogSystem() {
   const [saving, setSaving] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
   const [actionMenuOpenId, setActionMenuOpenId] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<AdminBlogPost | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Pick<AdminBlogPost, 'id' | 'title'> | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   /** Remount rich editor when starting a fresh post (no id). */
@@ -219,7 +219,7 @@ export default function AdminBlogSystem() {
     setActionMenuOpenId((current) => (current === postId ? null : postId));
   };
 
-  const handleDeletePrompt = (post: AdminBlogPost) => {
+  const handleDeletePrompt = (post: Pick<AdminBlogPost, 'id' | 'title'>) => {
     setDeleteError(null);
     setActionMenuOpenId(null);
     setDeleteTarget(post);
@@ -521,19 +521,36 @@ export default function AdminBlogSystem() {
                   {formData.id ? "Edit post" : "New post"}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() => void handleSave()}
-                disabled={saving}
-                className="flex items-center gap-2 rounded-xl bg-red-600 px-8 py-3 font-bold text-white shadow-lg shadow-red-100 transition-all hover:bg-red-700 active:scale-95 disabled:opacity-60"
-              >
-                {saving ? (
-                  <Loader2 className="h-[18px] w-[18px] animate-spin" />
-                ) : (
-                  <Send size={18} />
-                )}
-                Save
-              </button>
+              <div className="flex items-center gap-3">
+                {formData.id ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDeleteTarget(
+                        formData.id
+                          ? { id: formData.id, title: formData.title }
+                          : null,
+                      )
+                    }
+                    className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-red-600 shadow-sm transition hover:bg-red-50 active:scale-95"
+                  >
+                    Delete
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => void handleSave()}
+                  disabled={saving}
+                  className="flex items-center gap-2 rounded-xl bg-red-600 px-8 py-3 font-bold text-white shadow-lg shadow-red-100 transition-all hover:bg-red-700 active:scale-95 disabled:opacity-60"
+                >
+                  {saving ? (
+                    <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                  ) : (
+                    <Send size={18} />
+                  )}
+                  Save
+                </button>
+              </div>
             </div>
           </div>
 

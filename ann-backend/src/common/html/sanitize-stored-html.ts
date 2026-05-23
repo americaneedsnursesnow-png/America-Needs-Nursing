@@ -61,7 +61,24 @@ const BLOG_RICH_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: [...JOB_TAGS, 'img'],
   allowedAttributes: {
     ...JOB_RICH_OPTIONS.allowedAttributes,
-    img: ['src', 'alt', 'width', 'height', 'loading', 'decoding', 'class'],
+    '*': [...(JOB_RICH_OPTIONS.allowedAttributes['*'] ?? []), 'style'],
+    img: ['src', 'alt', 'width', 'height', 'loading', 'decoding', 'class', 'style'],
+  },
+  allowedStyles: {
+    '*': {
+      'font-weight': [/^\d+$/, /^(normal|bold|bolder|lighter|initial|inherit)$/i],
+      'font-style': [/^(normal|italic|oblique|initial|inherit)$/i],
+      'text-decoration': [/^[\w\s-]+$/i],
+      'text-decoration-color': [/^[#\w\s(),]+$/i],
+      'text-decoration-line': [/^[\w\s]+$/i],
+      'text-decoration-style': [/^[\w\s]+$/i],
+      'text-align': [/^(left|right|center|justify|start|end|inherit|initial)$/i],
+      'white-space': [/^(normal|nowrap|pre|pre-wrap|pre-line|break-spaces|inherit|initial)$/i],
+      'color': [/^[#\w\s(),]+$/i],
+      'background-color': [/^[#\w\s(),]+$/i],
+      'font-size': [/^[\d.]+(px|em|rem|%)$/i],
+      'line-height': [/^[\d.]+(px|em|rem|%)?$/i],
+    },
   },
   exclusiveFilter(frame) {
     return (
