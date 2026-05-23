@@ -16,10 +16,10 @@ export function HeroSection() {
     <section className="relative w-full max-w-none overflow-hidden bg-white">
       {/* 
         IMAGE CONTAINER
-        Fixed: On mobile, we use 'absolute' and 'object-cover' so the image 
-        stretches to match the height of the content.
+        Updated: Mobile view now constrains image height and adjusts by width.
+        Desktop remains full-size background.
       */}
-      <div className="absolute inset-0 z-0 lg:relative lg:block">
+      <div className="h-auto max-h-[350px] sm:max-h-[350px] md:max-h-[400px] absolute inset-0 z-0 lg:relative lg:block lg:h-auto lg:max-h-none">
         <Image
           src={image.src}
           alt={image.alt}
@@ -34,10 +34,10 @@ export function HeroSection() {
 
       {/* 
         CONTENT WRAPPER
-        Fixed: Changed from 'absolute' to 'relative' on mobile. 
-        This "pushes" the container height to be as tall as the form and text.
+        Updated: Reduced mobile top padding by 10px to bring heading up.
+        Heading now positioned 10px higher on mobile view.
       */}
-      <div className="relative z-10 flex flex-col justify-center pb-12 pt-12 sm:pb-12 lg:absolute lg:inset-0 lg:pb-36 lg:pt-32">
+      <div className="relative z-10 flex flex-col justify-center pb-12 pt-40 sm:pb-12 sm:pt-12 lg:absolute lg:inset-0 lg:pb-36 lg:pt-32">
         <SiteContentWrapper>
           <div className="mx-auto grid w-full max-w-7xl gap-12 lg:grid-cols-2 lg:items-center lg:gap-12 xl:gap-16">
             <div className="max-w-xl text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] lg:max-w-none">
