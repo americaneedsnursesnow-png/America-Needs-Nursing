@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDate,
+  IsDateString,
   IsEnum,
   IsOptional,
   IsString,
@@ -55,4 +56,8 @@ export class UpdateBlogPostDto {
   @Type(() => Date)
   @IsDate()
   publishedAt?: Date | null;
+
+  @IsOptional()
+  @IsDateString()
+  scheduledAt?: string | null;
 }

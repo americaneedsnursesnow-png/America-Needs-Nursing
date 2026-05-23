@@ -2,6 +2,7 @@ import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDate,
+  IsDateString,
   IsEnum,
   IsOptional,
   IsString,
@@ -64,4 +65,9 @@ export class CreateBlogPostDto {
   @Type(() => Date)
   @IsDate()
   publishedAt?: Date;
+
+  /** ISO-8601 publish time (UTC). Omit for immediate publish. Used when status is SCHEDULED. */
+  @IsOptional()
+  @IsDateString()
+  scheduledAt?: string;
 }
