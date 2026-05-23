@@ -185,7 +185,7 @@ export function Header() {
 
         {/* MOBILE DROPDOWN MENU */}
         {open ? (
-          <div id="mobile-nav" className="border-t border-slate-100 bg-white shadow-card md:hidden">
+          <div id="mobile-nav" className="fixed left-0 right-0 top-16 z-40 border-b border-slate-100 bg-white shadow-card md:hidden">
             <nav aria-label="Mobile primary">
               <SiteContentWrapper className="flex flex-col gap-1 py-3">
                 {mainNav.map((item) => {
