@@ -48,12 +48,12 @@ export function HeroSection() {
               <h1 className="mt-4 break-words text-3xl font-bold leading-tight tracking-tight text-white xs:text-4xl sm:text-4xl md:text-5xl lg:text-[2.75rem] xl:text-6xl">
                 {title}
               </h1>
-              <p className="mt-5 max-w-lg text-base leading-relaxed text-white/90 sm:text-lg">
+              <p className="hidden md:block mt-5 max-w-lg text-base leading-relaxed text-white/90 sm:text-lg">
                 {subtitle}
               </p>
 
               {/* Stats: 3-column grid to save vertical space */}
-              <div className="mt-10 grid grid-cols-3 gap-4 sm:max-w-md sm:gap-8">
+              <div className="hidden md:grid mt-10 grid-cols-3 gap-4 sm:max-w-md sm:gap-8">
                 {stats.map((item, index) => (
                   <div key={item.label}>
                     <p className="text-xl font-bold text-white sm:text-3xl md:text-4xl">
