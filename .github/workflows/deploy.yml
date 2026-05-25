@@ -33,8 +33,9 @@ jobs:
 
   deploy:
     needs: verify
-    # VPS deploy only on push to `production` (not on pull_request).
-    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
+
+    # VPS deploy only on push to `main` (not on pull_request).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -63,7 +64,7 @@ jobs:
               # ================= BACKEND =================
               cd ann-backend
               git reset --hard
-              git pull origin production
+              git pull origin main
               npm install
               npm run build
               npm run verify:build
@@ -73,7 +74,7 @@ jobs:
               # ================= FRONTEND =================
               cd ../front-end
               git reset --hard
-              git pull origin production
+              git pull origin main
               npm install
               npm run build
               npm run verify:build
