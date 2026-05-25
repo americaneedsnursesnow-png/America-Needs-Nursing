@@ -13,6 +13,7 @@ import {
   renderBlogPublishEmail,
 } from '../mail/email-layouts';
 import { MailService } from '../mail/mail.service';
+import { richHtmlToPlainText } from '../common/html/sanitize-stored-html';
 
 /**
  * Sends “new blog post” email to active newsletter subscribers for the post’s tenant.
@@ -66,9 +67,9 @@ export class BlogPublishNotificationsService {
     }
 
     const subject = `New article: ${post.title}`;
+    const preview = richHtmlToPlainText(post.excerpt || post.body);
     const excerpt =
-      post.excerpt?.trim() ||
-      post.body.slice(0, 200).replace(/\s+/g, ' ').trim() + '…';
+      preview.length > 200 ? `${preview.slice(0, 200).trim()}...` : preview;
     const frontendBase = normaliseFrontendBase(
       this.config.get<string>('FRONTEND_URL'),
     );

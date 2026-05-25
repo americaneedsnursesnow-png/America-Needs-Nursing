@@ -107,3 +107,13 @@ export function sanitizeBlogRichHtml(html: string): string {
 export function sanitizeChatPlainHtml(html: string): string {
   return sanitizeHtml(html ?? '', CHAT_STRIP_OPTIONS).trim();
 }
+
+export function richHtmlToPlainText(html: string | null | undefined): string {
+  const withBreaks = String(html ?? '').replace(
+    /<\/(p|div|li|h[1-6]|blockquote|tr)>/gi,
+    ' ',
+  );
+  return sanitizeHtml(withBreaks, CHAT_STRIP_OPTIONS)
+    .replace(/\s+/g, ' ')
+    .trim();
+}

@@ -782,27 +782,6 @@ export default function AdminBlogSystem() {
                       )}
                       {coverUploading ? "Uploading…" : "Upload photo"}
                     </button>
-                    <div className="space-y-1">
-                      <label
-                        htmlFor="cover-url-manual"
-                        className="text-[10px] font-bold uppercase tracking-wider text-slate-400"
-                      >
-                        Or paste image URL
-                      </label>
-                      <input
-                        id="cover-url-manual"
-                        type="text"
-                        placeholder="/files/… or https://…"
-                        className="w-full rounded-xl border border-transparent bg-slate-50 px-4 py-2.5 text-xs outline-none focus:border-red-100"
-                        value={formData.coverImageUrl}
-                        onChange={(e) =>
-                          setFormData((f) => ({
-                            ...f,
-                            coverImageUrl: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
                   </div>
 
                   <div className="space-y-3">
