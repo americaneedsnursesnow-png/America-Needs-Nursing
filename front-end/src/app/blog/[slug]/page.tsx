@@ -110,7 +110,7 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
                     </header>
 
                     <div className="prose prose-slate prose-lg max-w-none 
-                        prose-headings:font-black prose-headings:tracking-tight prose-headings:font-serif
+                        prose-headings:tracking-tight prose-headings:font-serif
                         prose-p:text-slate-600 prose-p:leading-relaxed prose-p:text-xl
                         prose-img:rounded-2xl prose-blockquote:border-l-4 prose-blockquote:border-red-600 prose-blockquote:bg-slate-50 prose-blockquote:p-6 prose-blockquote:italic
                     ">

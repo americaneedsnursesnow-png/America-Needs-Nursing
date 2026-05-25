@@ -16,10 +16,10 @@ export function HeroSection() {
     <section className="relative w-full max-w-none overflow-hidden bg-white">
       {/* 
         IMAGE CONTAINER
-        Fixed: On mobile, we use 'absolute' and 'object-cover' so the image 
-        stretches to match the height of the content.
+        Updated: Mobile view now constrains image height and adjusts by width.
+        Desktop remains full-size background.
       */}
-      <div className="absolute inset-0 z-0 lg:relative lg:block">
+      <div className="h-auto max-h-[350px] sm:max-h-[350px] md:max-h-[400px] absolute inset-0 z-0 lg:relative lg:block lg:h-auto lg:max-h-none">
         <Image
           src={image.src}
           alt={image.alt}
@@ -34,10 +34,10 @@ export function HeroSection() {
 
       {/* 
         CONTENT WRAPPER
-        Fixed: Changed from 'absolute' to 'relative' on mobile. 
-        This "pushes" the container height to be as tall as the form and text.
+        Updated: Reduced mobile top padding by 10px to bring heading up.
+        Heading now positioned 10px higher on mobile view.
       */}
-      <div className="relative z-10 flex flex-col justify-center pb-12 pt-12 sm:pb-12 lg:absolute lg:inset-0 lg:pb-36 lg:pt-32">
+      <div className="relative z-10 flex flex-col justify-center pb-12 pt-40 sm:pb-12 sm:pt-12 lg:absolute lg:inset-0 lg:pb-36 lg:pt-32">
         <SiteContentWrapper>
           <div className="mx-auto grid w-full max-w-7xl gap-12 lg:grid-cols-2 lg:items-center lg:gap-12 xl:gap-16">
             <div className="max-w-xl text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] lg:max-w-none">
@@ -48,12 +48,12 @@ export function HeroSection() {
               <h1 className="mt-4 break-words text-3xl font-bold leading-tight tracking-tight text-white xs:text-4xl sm:text-4xl md:text-5xl lg:text-[2.75rem] xl:text-6xl">
                 {title}
               </h1>
-              <p className="mt-5 max-w-lg text-base leading-relaxed text-white/90 sm:text-lg">
+              <p className="hidden md:block mt-5 max-w-lg text-base leading-relaxed text-white/90 sm:text-lg">
                 {subtitle}
               </p>
 
               {/* Stats: 3-column grid to save vertical space */}
-              <div className="mt-10 grid grid-cols-3 gap-4 sm:max-w-md sm:gap-8">
+              <div className="hidden md:grid mt-10 grid-cols-3 gap-4 sm:max-w-md sm:gap-8">
                 {stats.map((item, index) => (
                   <div key={item.label}>
                     <p className="text-xl font-bold text-white sm:text-3xl md:text-4xl">

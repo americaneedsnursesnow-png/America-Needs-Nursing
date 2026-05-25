@@ -36,6 +36,7 @@ const BLOG_BODY_ATTR = [
   "width",
   "height",
   "decoding",
+  "style",
 ] as const;
 
 /** Only images served from our uploads (`POST /blog/posts/images`) or same path over absolute API URL. */

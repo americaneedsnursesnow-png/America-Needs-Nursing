@@ -74,9 +74,11 @@ button:focus-visible {
   padding: 0.75rem 1rem;
   outline: none;
   color: #111827;
+  white-space: pre-wrap;
 }
 .submit-job-rich-editor-content .ProseMirror p {
   margin: 0.35rem 0;
+  white-space: pre-wrap;
 }
 .submit-job-rich-editor-content .ProseMirror p:first-child {
   margin-top: 0;
@@ -99,15 +101,17 @@ button:focus-visible {
 }
 .submit-job-rich-editor-content .ProseMirror h2 {
   font-size: 1.125rem;
-  font-weight: 700;
+  font-weight: 600;
   margin: 0.75rem 0 0.35rem;
   color: #111827;
+  white-space: pre-wrap;
 }
 .submit-job-rich-editor-content .ProseMirror h3 {
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   margin: 0.65rem 0 0.25rem;
   color: #111827;
+  white-space: pre-wrap;
 }
 .submit-job-rich-editor-content .ProseMirror blockquote {
   border-left: 3px solid #d1d5db;
@@ -123,6 +127,9 @@ button:focus-visible {
   content: attr(data-placeholder);
 }
 
+.job-rich-html {
+  white-space: pre-wrap;
+}
 .job-rich-html p {
   margin: 0.35rem 0;
 }
@@ -136,17 +143,27 @@ button:focus-visible {
   padding-left: 1.25rem;
   margin: 0.5rem 0;
 }
+.job-rich-html li,
+.job-rich-html p,
+.job-rich-html blockquote,
+.job-rich-html h2,
+.job-rich-html h3,
+.job-rich-html h4,
+.job-rich-html h5,
+.job-rich-html h6 {
+  white-space: pre-wrap;
+}
 .job-rich-html li {
   margin: 0.15rem 0;
 }
 .job-rich-html h2 {
   font-size: 1.125rem;
-  font-weight: 700;
+  font-weight: 600;
   margin: 0.75rem 0 0.35rem;
 }
 .job-rich-html h3 {
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   margin: 0.65rem 0 0.25rem;
 }
 .job-rich-html blockquote {

@@ -10,6 +10,7 @@ import {
 export enum BlogPostStatus {
   DRAFT = 'draft',
   PUBLISHED = 'published',
+  SCHEDULED = 'scheduled',
 }
 
 @Entity('blog_posts')
@@ -55,6 +56,10 @@ export class BlogPost {
 
   @Column({ name: 'published_at', type: 'timestamptz', nullable: true })
   publishedAt: Date | null;
+
+  /** When the blog post is scheduled to be published (UTC) */
+  @Column({ name: 'scheduled_at', type: 'timestamptz', nullable: true })
+  scheduledAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
