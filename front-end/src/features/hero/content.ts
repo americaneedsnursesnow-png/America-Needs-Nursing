@@ -12,13 +12,12 @@ export const heroContent = {
     height: 303,
   },
   eyebrow: "Get Hot & Trending Jobs",
-  title: "Real Jobs, Real People, Real Success",
+  title: "America's HealthCare Career & Hiring Network",
   subtitle:
-    "Getting a new job is never easy. Check what new jobs we have in store for you on JobStock.",
+    "Connecting Nurses, Healthcare Professionals, and Employers through jobs, media,recuirment, and community",
   stats: [
-    { digits: "200", accent: "M", label: "Active Jobs" },
-    { digits: "40", accent: "K", label: "Startups" },
-    { digits: "340", accent: "K", label: "Talents" },
+    { label: "Find HelathCare Talent" },
+    {  label: "Explore Careeers" },
   ],
   searchCard: {
     titleBefore: "Grow Your Career With ",

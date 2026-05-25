@@ -14,7 +14,7 @@ export function FooterSubscribe() {
     >
       {/* Background Image */}
       <div
-        className="pointer-events-none absolute inset-y-0 left-1/2 w-screen max-w-[100vw] -translate-x-1/2 overflow-hidden"
+        className="pointer-events-none absolute inset-y-0 left-1/2 w-full -translate-x-1/2 overflow-hidden"
         aria-hidden
       >
         <div className="relative h-full min-h-0 w-full">
