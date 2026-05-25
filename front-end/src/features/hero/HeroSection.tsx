@@ -7,8 +7,8 @@ export function HeroSection() {
   const { image, eyebrow, title, subtitle, stats } = heroContent;
 
   return (
-    <section className="relative w-full overflow-hidden bg-white">
-      <div className="absolute left-0 top-0 z-0 h-[560px] w-full lg:inset-0 lg:h-auto">
+    <section className="relative isolate min-h-[660px] w-full overflow-hidden bg-white lg:aspect-[4000/1350] lg:min-h-[560px]">
+      <div className="absolute inset-0 z-0">
         <Image
           src="/hero/mobile-hero-section.png"
           alt={image.alt}
@@ -22,14 +22,14 @@ export function HeroSection() {
           alt={image.alt}
           fill
           priority
-          className="hidden object-cover object-center lg:block"
+          className="hidden object-cover object-top lg:block"
           sizes="100vw"
         />
       </div>
 
-      <div className="relative z-10">
-        <SiteContentWrapper>
-          <div className="grid min-h-[660px] gap-10 pb-12 pt-40 sm:pt-48 lg:min-h-[720px] lg:grid-cols-2 lg:items-center lg:py-20">
+      <div className="relative z-10 min-h-[660px] lg:absolute lg:inset-0 lg:min-h-0">
+        <SiteContentWrapper className="lg:h-full">
+          <div className="grid min-h-[660px] gap-10 pb-12 pt-40 sm:pt-48 lg:h-full lg:min-h-0 lg:grid-cols-2 lg:items-center lg:py-16">
             <div className="max-w-xl text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] lg:max-w-none">
               <p className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-sm sm:text-sm">
                 {eyebrow}
