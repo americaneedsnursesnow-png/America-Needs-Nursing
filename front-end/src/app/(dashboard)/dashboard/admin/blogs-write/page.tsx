@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import {
+  CalendarClock,
   Plus,
   Search,
   Edit3,
@@ -43,8 +44,18 @@ type EditorForm = {
   coverImageUrl: string;
   excerpt: string;
   status: BlogPostStatus;
+  scheduledAt: string;
   sponsored: boolean;
 };
+
+function toDatetimeLocalValue(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function defaultScheduleLocalValue(): string {
+  return toDatetimeLocalValue(new Date(Date.now() + 60 * 60 * 1000));
+}
 
 const emptyForm = (): EditorForm => ({
   id: null,
@@ -54,6 +65,7 @@ const emptyForm = (): EditorForm => ({
   coverImageUrl: "",
   excerpt: "",
   status: "draft",
+  scheduledAt: defaultScheduleLocalValue(),
   sponsored: false,
 });
 
@@ -174,6 +186,9 @@ export default function AdminBlogSystem() {
       coverImageUrl: post.coverImageUrl ?? "",
       excerpt: post.excerpt ?? "",
       status: post.status,
+      scheduledAt: post.scheduledAt
+        ? toDatetimeLocalValue(new Date(post.scheduledAt))
+        : defaultScheduleLocalValue(),
       sponsored: post.sponsored,
     });
     setSaveError(null);
@@ -187,6 +202,19 @@ export default function AdminBlogSystem() {
       setSaveError("Title and body are required.");
       return;
     }
+    let scheduledAtIso: string | undefined;
+    if (formData.status === "scheduled") {
+      const scheduledAt = new Date(formData.scheduledAt);
+      if (Number.isNaN(scheduledAt.getTime())) {
+        setSaveError("Choose a valid publish date and time.");
+        return;
+      }
+      if (scheduledAt.getTime() <= Date.now()) {
+        setSaveError("Scheduled publish time must be in the future.");
+        return;
+      }
+      scheduledAtIso = scheduledAt.toISOString();
+    }
     const bodyHtml = sanitizeBlogRichHtml(formData.body.trim());
     setSaving(true);
     try {
@@ -198,6 +226,7 @@ export default function AdminBlogSystem() {
           excerpt: formData.excerpt.trim() || null,
           sponsored: formData.sponsored,
           status: formData.status,
+          scheduledAt: scheduledAtIso ?? null,
         });
       } else {
         const createBody = {
@@ -206,6 +235,7 @@ export default function AdminBlogSystem() {
           excerpt: formData.excerpt.trim() || undefined,
           sponsored: formData.sponsored,
           status: formData.status,
+          ...(scheduledAtIso ? { scheduledAt: scheduledAtIso } : {}),
           ...(formData.coverImageUrl.trim()
             ? { coverImageUrl: formData.coverImageUrl.trim() }
             : {}),
@@ -437,11 +467,18 @@ export default function AdminBlogSystem() {
                             className={`rounded-lg px-3 py-1.5 text-[11px] font-black uppercase tracking-wider ${
                               post.status === "published"
                                 ? "bg-emerald-50 text-emerald-700"
+                                : post.status === "scheduled"
+                                  ? "bg-amber-50 text-amber-700"
                                 : "bg-slate-100 text-slate-600"
                             }`}
                           >
                             {post.status}
                           </span>
+                          {post.status === "scheduled" && post.scheduledAt ? (
+                            <span className="mt-2 block text-xs font-semibold text-slate-400">
+                              {formatListDate(post.scheduledAt)}
+                            </span>
+                          ) : null}
                         </td>
                         <td className="px-10 py-8 text-right">
                           <div
@@ -783,13 +820,47 @@ export default function AdminBlogSystem() {
                         setFormData({
                           ...formData,
                           status: e.target.value as BlogPostStatus,
+                          scheduledAt:
+                            e.target.value === "scheduled" &&
+                            !formData.scheduledAt
+                              ? defaultScheduleLocalValue()
+                              : formData.scheduledAt,
                         })
                       }
                     >
                       <option value="draft">Draft</option>
                       <option value="published">Published</option>
+                      <option value="scheduled">Scheduled</option>
                     </select>
                   </div>
+                  {formData.status === "scheduled" ? (
+                    <div className="space-y-3 rounded-2xl border border-amber-100 bg-amber-50/60 p-4">
+                      <label
+                        htmlFor="post-scheduled-at"
+                        className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-amber-800"
+                      >
+                        <CalendarClock size={14} aria-hidden />
+                        Publish date and time
+                      </label>
+                      <input
+                        id="post-scheduled-at"
+                        type="datetime-local"
+                        value={formData.scheduledAt}
+                        min={toDatetimeLocalValue(new Date())}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            scheduledAt: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-xl border border-transparent bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none transition-all focus:border-amber-200"
+                      />
+                      <p className="text-xs font-medium leading-relaxed text-amber-900/80">
+                        Time is interpreted in your browser&apos;s local timezone
+                        and queued in UTC on the server.
+                      </p>
+                    </div>
+                  ) : null}
                   <label className="flex cursor-pointer items-center gap-3">
                     <input
                       type="checkbox"

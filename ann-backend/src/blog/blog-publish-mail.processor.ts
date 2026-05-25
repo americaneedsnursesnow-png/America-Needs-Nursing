@@ -49,6 +49,16 @@ export class BlogPublishMailProcessor extends WorkerHost {
       post.scheduledAt = null;
       await this.blogRepository.save(post);
       this.logger.log(`Blog post ${postId} auto-published from scheduled status`);
+    } else if (post.status !== BlogPostStatus.PUBLISHED) {
+      this.logger.warn(
+        `Blog post ${postId} is ${post.status}; skipping publish notifications`,
+      );
+      return;
+    } else if (String(job.id ?? '') === `blog-publish-${postId}`) {
+      this.logger.warn(
+        `Stale scheduled blog job for already-published post ${postId}; skipping duplicate notifications`,
+      );
+      return;
     }
 
     await this.blogPublishNotifications.sendPublishedPostToNewsletterSubscribers(

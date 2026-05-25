@@ -1,7 +1,7 @@
 import { authedJson, authedMultipartJson, authedVoid } from "./authed-client";
 
 /** Matches Nest `BlogPostStatus`. */
-export type BlogPostStatus = "draft" | "published";
+export type BlogPostStatus = "draft" | "published" | "scheduled";
 
 /** Admin list/create/update response (Nest `BlogPost` entity, camelCase). */
 export type AdminBlogPost = {
@@ -17,6 +17,7 @@ export type AdminBlogPost = {
   sponsored: boolean;
   status: BlogPostStatus;
   publishedAt: string | null;
+  scheduledAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -34,6 +35,8 @@ export type CreateBlogPostBody = {
   status: BlogPostStatus;
   /** ISO date string when scheduling / overriding publish time */
   publishedAt?: string;
+  /** ISO date string when scheduling a future publish */
+  scheduledAt?: string;
 };
 
 export type UpdateBlogPostBody = {
@@ -46,6 +49,7 @@ export type UpdateBlogPostBody = {
   sponsored?: boolean;
   status?: BlogPostStatus;
   publishedAt?: string | null;
+  scheduledAt?: string | null;
 };
 
 /** Multipart field name must be `file` (Nest `FileInterceptor('file')`). Max 5 MB on server. */

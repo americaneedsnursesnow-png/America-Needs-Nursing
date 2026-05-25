@@ -63,7 +63,12 @@ export class BlogService {
     );
 
     let scheduledAt: Date | null = null;
-    if (dto.status === BlogPostStatus.SCHEDULED && dto.scheduledAt) {
+    if (dto.status === BlogPostStatus.SCHEDULED) {
+      if (!dto.scheduledAt) {
+        throw new BadRequestException(
+          'Scheduled time is required for scheduled posts',
+        );
+      }
       scheduledAt = new Date(dto.scheduledAt);
       if (scheduledAt < new Date()) {
         throw new BadRequestException(
@@ -156,18 +161,29 @@ export class BlogService {
       if (dto.status === BlogPostStatus.PUBLISHED && !post.publishedAt) {
         post.publishedAt = dto.publishedAt ?? new Date();
       }
+      if (dto.status === BlogPostStatus.PUBLISHED) {
+        post.scheduledAt = null;
+      }
       if (dto.status === BlogPostStatus.DRAFT) {
         post.publishedAt = dto.publishedAt ?? null;
         post.scheduledAt = null;
       }
-      if (dto.status === BlogPostStatus.SCHEDULED && dto.scheduledAt) {
-        const scheduledAt = new Date(dto.scheduledAt);
+      if (dto.status === BlogPostStatus.SCHEDULED) {
+        const rawScheduledAt =
+          dto.scheduledAt ?? post.scheduledAt?.toISOString();
+        if (!rawScheduledAt) {
+          throw new BadRequestException(
+            'Scheduled time is required for scheduled posts',
+          );
+        }
+        const scheduledAt = new Date(rawScheduledAt);
         if (scheduledAt < new Date()) {
           throw new BadRequestException(
             'Scheduled time must be in the future',
           );
         }
         post.scheduledAt = scheduledAt;
+        post.publishedAt = null;
       }
     } else if (dto.publishedAt !== undefined) {
       post.publishedAt = dto.publishedAt;
@@ -188,6 +204,15 @@ export class BlogService {
 
     if (oldCoverPath) {
       await deleteFileIfExists(oldCoverPath);
+    }
+
+    if (wasScheduled && saved.status !== BlogPostStatus.SCHEDULED) {
+      await this.removeScheduledBlogQueueJob(saved.id).catch((err: unknown) => {
+        this.logger.error(
+          'removeScheduledBlogQueueJob failed',
+          err instanceof Error ? err.stack : String(err),
+        );
+      });
     }
 
     // Queue jobs based on status changes
@@ -228,6 +253,12 @@ export class BlogService {
       throw new NotFoundException('Post not found');
     }
     const coverImageUrl = post.coverImageUrl;
+    await this.removeScheduledBlogQueueJob(post.id).catch((err: unknown) => {
+      this.logger.error(
+        'removeScheduledBlogQueueJob failed during delete',
+        err instanceof Error ? err.stack : String(err),
+      );
+    });
     await this.blogRepository.remove(post);
     if (coverImageUrl) {
       const coverPath = resolveStoredBlogImageFile(
@@ -319,6 +350,15 @@ export class BlogService {
     this.logger.log(
       `Blog scheduled publish job queued for post ${post.id} at ${post.scheduledAt}`,
     );
+  }
+
+  private async removeScheduledBlogQueueJob(postId: string): Promise<void> {
+    const existingJob = await this.blogPublishMailQueue.getJob(
+      `blog-publish-${postId}`,
+    );
+    if (existingJob) {
+      await existingJob.remove();
+    }
   }
 
   private async resolveNewBlogSlug(
