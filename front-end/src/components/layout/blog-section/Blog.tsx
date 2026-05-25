@@ -3,6 +3,7 @@ import { SiteContentWrapper } from "@/components/layout/SiteContentWrapper";
 import { blogCoverSrc } from "@/lib/blog-cover-image";
 import { getPublicBlogPosts } from "@/lib/api/public-api";
 import type { PublicBlogPost } from "@/lib/api/types";
+import { htmlToPlainText } from "@/lib/html-to-plain-text";
 import { ArrowRight } from "lucide-react";
 
 function formatDate(iso: string | null): string {
@@ -49,11 +50,13 @@ export async function BlogSection() {
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => (
-              <div
-                key={post.id}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all duration-500 hover:shadow-2xl"
-              >
+            {posts.map((post) => {
+              const preview = htmlToPlainText(post.excerpt || post.body);
+              return (
+                <div
+                  key={post.id}
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all duration-500 hover:shadow-2xl"
+                >
                 <div
                   className="relative flex h-56 items-center justify-center overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200"
                   aria-hidden
@@ -83,8 +86,8 @@ export async function BlogSection() {
                     {post.title}
                   </h3>
                   <p className="mb-8 line-clamp-3 text-sm leading-relaxed text-gray-500">
-                    {post.excerpt?.trim() ||
-                      post.body.slice(0, 160).replace(/\s+/g, " ").trim() + "…"}
+                    {preview.slice(0, 160)}
+                    {preview.length > 160 ? "…" : ""}
                   </p>
 
                   <div className="mt-auto">
@@ -99,8 +102,9 @@ export async function BlogSection() {
                     </Link>
                   </div>
                 </div>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         )}
 

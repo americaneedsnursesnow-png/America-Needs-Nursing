@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { createPortal } from "react-dom";
 import {
+  CalendarClock,
   Plus,
   Search,
   Edit3,
@@ -11,6 +13,8 @@ import {
   Image as ImageIcon,
   Upload,
   X,
+  MoreVertical,
+  Trash2,
 } from "lucide-react";
 
 import { RichTextEditor } from "@/components/rich-text-editor/rich-text-editor.lazy";
@@ -18,6 +22,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { blogCoverSrc } from "@/lib/blog-cover-image";
 import {
   createBlogPost,
+  deleteBlogPost,
   listAdminBlogPosts,
   updateBlogPost,
   uploadBlogPostImage,
@@ -39,8 +44,18 @@ type EditorForm = {
   coverImageUrl: string;
   excerpt: string;
   status: BlogPostStatus;
+  scheduledAt: string;
   sponsored: boolean;
 };
+
+function toDatetimeLocalValue(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function defaultScheduleLocalValue(): string {
+  return toDatetimeLocalValue(new Date(Date.now() + 60 * 60 * 1000));
+}
 
 const emptyForm = (): EditorForm => ({
   id: null,
@@ -50,6 +65,7 @@ const emptyForm = (): EditorForm => ({
   coverImageUrl: "",
   excerpt: "",
   status: "draft",
+  scheduledAt: defaultScheduleLocalValue(),
   sponsored: false,
 });
 
@@ -75,11 +91,45 @@ export default function AdminBlogSystem() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
+  const [actionMenuOpenId, setActionMenuOpenId] = useState<string | null>(null);
+  const [actionMenuPosition, setActionMenuPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Pick<AdminBlogPost, 'id' | 'title'> | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   /** Remount rich editor when starting a fresh post (no id). */
   const [newBodyEditorKey, setNewBodyEditorKey] = useState(0);
 
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const coverFileRef = useRef<HTMLInputElement>(null);
+  const activeMenuRef = useRef<HTMLDivElement>(null);
+  const activeMenuButtonRef = useRef<HTMLButtonElement>(null);
+
+  const closeActionMenu = useCallback(() => {
+    setActionMenuOpenId(null);
+    setActionMenuPosition(null);
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
+      if (
+        activeMenuRef.current?.contains(target) ||
+        activeMenuButtonRef.current?.contains(target)
+      ) {
+        return;
+      }
+      closeActionMenu();
+    }
+    if (actionMenuOpenId !== null) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [actionMenuOpenId, closeActionMenu]);
 
   const adjustHeight = (ref: RefObject<HTMLTextAreaElement | null>) => {
     if (ref.current) {
@@ -136,6 +186,9 @@ export default function AdminBlogSystem() {
       coverImageUrl: post.coverImageUrl ?? "",
       excerpt: post.excerpt ?? "",
       status: post.status,
+      scheduledAt: post.scheduledAt
+        ? toDatetimeLocalValue(new Date(post.scheduledAt))
+        : defaultScheduleLocalValue(),
       sponsored: post.sponsored,
     });
     setSaveError(null);
@@ -149,6 +202,19 @@ export default function AdminBlogSystem() {
       setSaveError("Title and body are required.");
       return;
     }
+    let scheduledAtIso: string | undefined;
+    if (formData.status === "scheduled") {
+      const scheduledAt = new Date(formData.scheduledAt);
+      if (Number.isNaN(scheduledAt.getTime())) {
+        setSaveError("Choose a valid publish date and time.");
+        return;
+      }
+      if (scheduledAt.getTime() <= Date.now()) {
+        setSaveError("Scheduled publish time must be in the future.");
+        return;
+      }
+      scheduledAtIso = scheduledAt.toISOString();
+    }
     const bodyHtml = sanitizeBlogRichHtml(formData.body.trim());
     setSaving(true);
     try {
@@ -160,6 +226,7 @@ export default function AdminBlogSystem() {
           excerpt: formData.excerpt.trim() || null,
           sponsored: formData.sponsored,
           status: formData.status,
+          scheduledAt: scheduledAtIso ?? null,
         });
       } else {
         const createBody = {
@@ -168,6 +235,7 @@ export default function AdminBlogSystem() {
           excerpt: formData.excerpt.trim() || undefined,
           sponsored: formData.sponsored,
           status: formData.status,
+          ...(scheduledAtIso ? { scheduledAt: scheduledAtIso } : {}),
           ...(formData.coverImageUrl.trim()
             ? { coverImageUrl: formData.coverImageUrl.trim() }
             : {}),
@@ -187,6 +255,71 @@ export default function AdminBlogSystem() {
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleToggleActionMenu = (
+    postId: string,
+    button: HTMLButtonElement,
+  ) => {
+    setActionMenuOpenId((current) => {
+      if (current === postId) {
+        setActionMenuPosition(null);
+        return null;
+      }
+
+      const menuWidth = 176;
+      const menuHeight = 96;
+      const edgeGap = 16;
+      const rect = button.getBoundingClientRect();
+      const shouldOpenUp =
+        window.innerHeight - rect.bottom < menuHeight + edgeGap &&
+        rect.top >= menuHeight + edgeGap;
+      setActionMenuPosition({
+        top: shouldOpenUp
+          ? rect.top - menuHeight - 8
+          : Math.min(
+              rect.bottom + 8,
+              window.innerHeight - menuHeight - edgeGap,
+            ),
+        left: Math.max(
+          edgeGap,
+          Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - edgeGap),
+        ),
+      });
+      return postId;
+    });
+  };
+
+  const handleDeletePrompt = (post: Pick<AdminBlogPost, 'id' | 'title'>) => {
+    setDeleteError(null);
+    closeActionMenu();
+    setDeleteTarget(post);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteError(null);
+    setDeleteTarget(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!accessToken || !deleteTarget) return;
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      await deleteBlogPost(accessToken, deleteTarget.id);
+      setDeleteTarget(null);
+      await loadPosts();
+    } catch (e) {
+      setDeleteError(
+        e instanceof BackendRequestError
+          ? e.message
+          : e instanceof Error
+            ? e.message
+            : "Delete failed.",
+      );
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -282,7 +415,7 @@ export default function AdminBlogSystem() {
                 />
               </div>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto min-h-[260px]">
               {listLoading ? (
                 <div className="flex justify-center py-16 text-slate-500">
                   <Loader2 className="h-8 w-8 animate-spin" />
@@ -334,21 +467,70 @@ export default function AdminBlogSystem() {
                             className={`rounded-lg px-3 py-1.5 text-[11px] font-black uppercase tracking-wider ${
                               post.status === "published"
                                 ? "bg-emerald-50 text-emerald-700"
+                                : post.status === "scheduled"
+                                  ? "bg-amber-50 text-amber-700"
                                 : "bg-slate-100 text-slate-600"
                             }`}
                           >
                             {post.status}
                           </span>
+                          {post.status === "scheduled" && post.scheduledAt ? (
+                            <span className="mt-2 block text-xs font-semibold text-slate-400">
+                              {formatListDate(post.scheduledAt)}
+                            </span>
+                          ) : null}
                         </td>
                         <td className="px-10 py-8 text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleEdit(post)}
-                            className="rounded-xl p-3 text-slate-400 transition-all hover:bg-red-50 hover:text-red-600"
-                            aria-label="Edit post"
+                          <div
+                            className="relative inline-flex"
                           >
-                            <Edit3 size={20} />
-                          </button>
+                            <button
+                              ref={actionMenuOpenId === post.id ? activeMenuButtonRef : undefined}
+                              type="button"
+                              onClick={(e) =>
+                                handleToggleActionMenu(post.id, e.currentTarget)
+                              }
+                              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:scale-95"
+                              aria-expanded={actionMenuOpenId === post.id}
+                              aria-haspopup="menu"
+                            >
+                              Actions
+                              <MoreVertical size={18} />
+                            </button>
+                            {actionMenuOpenId === post.id && actionMenuPosition
+                              ? createPortal(
+                                  <div
+                                    ref={activeMenuRef}
+                                    className="fixed z-[200] w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-top-1 duration-150"
+                                    style={{
+                                      top: actionMenuPosition.top,
+                                      left: actionMenuPosition.left,
+                                    }}
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        handleEdit(post);
+                                        closeActionMenu();
+                                      }}
+                                      className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-slate-700 transition hover:bg-slate-50 active:bg-slate-100"
+                                    >
+                                      <Edit3 size={16} className="text-slate-400" />
+                                      Edit blog
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeletePrompt(post)}
+                                      className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-red-600 transition hover:bg-red-50 active:bg-red-100/50"
+                                    >
+                                      <Trash2 size={16} className="text-red-500" />
+                                      Delete blog
+                                    </button>
+                                  </div>,
+                                  document.body,
+                                )
+                              : null}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -360,6 +542,55 @@ export default function AdminBlogSystem() {
               <p className="py-12 text-center text-slate-500">No posts yet.</p>
             ) : null}
           </div>
+          {deleteTarget ? (
+            <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="w-full max-w-lg rounded-[32px] border border-slate-100 bg-white p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
+                    <Trash2 size={22} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-black tracking-tight text-slate-900">
+                      Delete blog post
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                      Are you sure you want to delete <span className="font-semibold text-slate-800">{deleteTarget.title}</span>? This action is permanent and cannot be undone.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCancelDelete}
+                    className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    aria-label="Close delete confirmation"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+                {deleteError ? (
+                  <p className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+                    {deleteError}
+                  </p>
+                ) : null}
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={handleCancelDelete}
+                    className="rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmDelete}
+                    disabled={deleting}
+                    className="rounded-2xl bg-red-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-600/10 transition hover:bg-red-700 active:scale-95 disabled:opacity-60"
+                  >
+                    {deleting ? "Deleting…" : "Yes, delete"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : (
         <div className="animate-in fade-in duration-500">
@@ -381,19 +612,36 @@ export default function AdminBlogSystem() {
                   {formData.id ? "Edit post" : "New post"}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() => void handleSave()}
-                disabled={saving}
-                className="flex items-center gap-2 rounded-xl bg-red-600 px-8 py-3 font-bold text-white shadow-lg shadow-red-100 transition-all hover:bg-red-700 active:scale-95 disabled:opacity-60"
-              >
-                {saving ? (
-                  <Loader2 className="h-[18px] w-[18px] animate-spin" />
-                ) : (
-                  <Send size={18} />
-                )}
-                Save
-              </button>
+              <div className="flex items-center gap-3">
+                {formData.id ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDeleteTarget(
+                        formData.id
+                          ? { id: formData.id, title: formData.title }
+                          : null,
+                      )
+                    }
+                    className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-red-600 shadow-sm transition hover:bg-red-50 active:scale-95"
+                  >
+                    Delete
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => void handleSave()}
+                  disabled={saving}
+                  className="flex items-center gap-2 rounded-xl bg-red-600 px-8 py-3 font-bold text-white shadow-lg shadow-red-100 transition-all hover:bg-red-700 active:scale-95 disabled:opacity-60"
+                >
+                  {saving ? (
+                    <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                  ) : (
+                    <Send size={18} />
+                  )}
+                  Save
+                </button>
+              </div>
             </div>
           </div>
 
@@ -534,27 +782,6 @@ export default function AdminBlogSystem() {
                       )}
                       {coverUploading ? "Uploading…" : "Upload photo"}
                     </button>
-                    <div className="space-y-1">
-                      <label
-                        htmlFor="cover-url-manual"
-                        className="text-[10px] font-bold uppercase tracking-wider text-slate-400"
-                      >
-                        Or paste image URL
-                      </label>
-                      <input
-                        id="cover-url-manual"
-                        type="text"
-                        placeholder="/files/… or https://…"
-                        className="w-full rounded-xl border border-transparent bg-slate-50 px-4 py-2.5 text-xs outline-none focus:border-red-100"
-                        value={formData.coverImageUrl}
-                        onChange={(e) =>
-                          setFormData((f) => ({
-                            ...f,
-                            coverImageUrl: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
                   </div>
 
                   <div className="space-y-3">
@@ -572,13 +799,47 @@ export default function AdminBlogSystem() {
                         setFormData({
                           ...formData,
                           status: e.target.value as BlogPostStatus,
+                          scheduledAt:
+                            e.target.value === "scheduled" &&
+                            !formData.scheduledAt
+                              ? defaultScheduleLocalValue()
+                              : formData.scheduledAt,
                         })
                       }
                     >
                       <option value="draft">Draft</option>
                       <option value="published">Published</option>
+                      <option value="scheduled">Scheduled</option>
                     </select>
                   </div>
+                  {formData.status === "scheduled" ? (
+                    <div className="space-y-3 rounded-2xl border border-amber-100 bg-amber-50/60 p-4">
+                      <label
+                        htmlFor="post-scheduled-at"
+                        className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-amber-800"
+                      >
+                        <CalendarClock size={14} aria-hidden />
+                        Publish date and time
+                      </label>
+                      <input
+                        id="post-scheduled-at"
+                        type="datetime-local"
+                        value={formData.scheduledAt}
+                        min={toDatetimeLocalValue(new Date())}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            scheduledAt: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-xl border border-transparent bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none transition-all focus:border-amber-200"
+                      />
+                      <p className="text-xs font-medium leading-relaxed text-amber-900/80">
+                        Time is interpreted in your browser&apos;s local timezone
+                        and queued in UTC on the server.
+                      </p>
+                    </div>
+                  ) : null}
                   <label className="flex cursor-pointer items-center gap-3">
                     <input
                       type="checkbox"

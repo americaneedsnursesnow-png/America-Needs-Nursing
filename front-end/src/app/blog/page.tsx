@@ -4,6 +4,7 @@ import { PublicPagination } from "@/components/public/public-pagination";
 import { blogCoverSrc } from "@/lib/blog-cover-image";
 import { emptyPaginated, getPublicBlogPosts } from "@/lib/api/public-api";
 import type { PublicBlogPost } from "@/lib/api/types";
+import { htmlToPlainText } from "@/lib/html-to-plain-text";
 
 const PAGE_SIZE = 12;
 
@@ -45,6 +46,9 @@ export default async function BlogListPage({ searchParams }: PageProps) {
   const rightSidebar = posts.slice(4, 9);  // "Just In"
   const bottomFeature = posts[9];          // Wide Banner
   const bottomList = posts.slice(10, 13);  // "Latest Headlines"
+  const mainFeaturePreview = mainFeature
+    ? htmlToPlainText(mainFeature.excerpt || mainFeature.body)
+    : "";
 
   const hrefPage = (p: number) =>
     `/blog?${new URLSearchParams({ page: String(p) }).toString()}`;
@@ -120,7 +124,8 @@ export default async function BlogListPage({ searchParams }: PageProps) {
                         {mainFeature.title}
                     </h2>
                     <p className="text-xl text-slate-600 leading-relaxed font-serif italic first-letter:text-5xl first-letter:font-bold first-letter:mr-2 first-letter:float-left">
-                        {mainFeature.excerpt || mainFeature.body.slice(0, 200)}...
+                        {mainFeaturePreview.slice(0, 200)}
+                        {mainFeaturePreview.length > 200 ? "..." : ""}
                     </p>
                     <div className="mt-8 flex justify-center">
                         <span className="border-y-2 border-slate-900 py-2 px-8 text-sm font-black uppercase tracking-widest group-hover:bg-slate-900 group-hover:text-white transition-colors">

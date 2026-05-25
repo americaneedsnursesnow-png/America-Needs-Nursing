@@ -6,6 +6,7 @@ import { SiteContentWrapper } from "@/components/layout/SiteContentWrapper";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { blogCoverSrc } from "@/lib/blog-cover-image";
 import { getPublicBlogPostsCached } from "@/lib/api/public-data-cache";
+import { htmlToPlainText } from "@/lib/html-to-plain-text";
 
 function formatDate(iso: string | null): string {
   if (!iso) return "";
@@ -30,6 +31,9 @@ export async function BlogLandingSection() {
   // Slicing for the 3-column layout
   const centerFeatured = posts[0]; // The Big Hero (Center)
   const centerCover = blogCoverSrc(centerFeatured.coverImageUrl);
+  const centerPreview = htmlToPlainText(
+    centerFeatured.excerpt || centerFeatured.body,
+  );
   const leftColumnPosts = posts.slice(1, 4); // 3 Posts for Left
   const rightColumnPosts = posts.slice(4, 8); // 4 Posts for Right
 
@@ -107,7 +111,7 @@ export async function BlogLandingSection() {
                   {centerFeatured.title}
                 </h3>
                 <p className="mt-4 text-lg text-slate-500 line-clamp-3 italic max-w-xl mx-auto font-medium">
-                  "{centerFeatured.excerpt || centerFeatured.body.slice(0, 160)}..."
+                  &quot;{centerPreview.slice(0, 160)}...&quot;
                 </p>
               </div>
             </Link>
