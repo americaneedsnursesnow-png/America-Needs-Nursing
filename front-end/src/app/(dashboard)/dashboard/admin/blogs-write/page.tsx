@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { createPortal } from "react-dom";
 import {
   Plus,
   Search,
@@ -79,6 +80,10 @@ export default function AdminBlogSystem() {
   const [saving, setSaving] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
   const [actionMenuOpenId, setActionMenuOpenId] = useState<string | null>(null);
+  const [actionMenuPosition, setActionMenuPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Pick<AdminBlogPost, 'id' | 'title'> | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -88,15 +93,23 @@ export default function AdminBlogSystem() {
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const coverFileRef = useRef<HTMLInputElement>(null);
   const activeMenuRef = useRef<HTMLDivElement>(null);
+  const activeMenuButtonRef = useRef<HTMLButtonElement>(null);
+
+  const closeActionMenu = useCallback(() => {
+    setActionMenuOpenId(null);
+    setActionMenuPosition(null);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
       if (
-        activeMenuRef.current &&
-        !activeMenuRef.current.contains(event.target as Node)
+        activeMenuRef.current?.contains(target) ||
+        activeMenuButtonRef.current?.contains(target)
       ) {
-        setActionMenuOpenId(null);
+        return;
       }
+      closeActionMenu();
     }
     if (actionMenuOpenId !== null) {
       document.addEventListener("mousedown", handleClickOutside);
@@ -104,7 +117,7 @@ export default function AdminBlogSystem() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [actionMenuOpenId]);
+  }, [actionMenuOpenId, closeActionMenu]);
 
   const adjustHeight = (ref: RefObject<HTMLTextAreaElement | null>) => {
     if (ref.current) {
@@ -215,13 +228,42 @@ export default function AdminBlogSystem() {
     }
   };
 
-  const handleToggleActionMenu = (postId: string) => {
-    setActionMenuOpenId((current) => (current === postId ? null : postId));
+  const handleToggleActionMenu = (
+    postId: string,
+    button: HTMLButtonElement,
+  ) => {
+    setActionMenuOpenId((current) => {
+      if (current === postId) {
+        setActionMenuPosition(null);
+        return null;
+      }
+
+      const menuWidth = 176;
+      const menuHeight = 96;
+      const edgeGap = 16;
+      const rect = button.getBoundingClientRect();
+      const shouldOpenUp =
+        window.innerHeight - rect.bottom < menuHeight + edgeGap &&
+        rect.top >= menuHeight + edgeGap;
+      setActionMenuPosition({
+        top: shouldOpenUp
+          ? rect.top - menuHeight - 8
+          : Math.min(
+              rect.bottom + 8,
+              window.innerHeight - menuHeight - edgeGap,
+            ),
+        left: Math.max(
+          edgeGap,
+          Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - edgeGap),
+        ),
+      });
+      return postId;
+    });
   };
 
   const handleDeletePrompt = (post: Pick<AdminBlogPost, 'id' | 'title'>) => {
     setDeleteError(null);
-    setActionMenuOpenId(null);
+    closeActionMenu();
     setDeleteTarget(post);
   };
 
@@ -403,12 +445,14 @@ export default function AdminBlogSystem() {
                         </td>
                         <td className="px-10 py-8 text-right">
                           <div
-                            ref={actionMenuOpenId === post.id ? activeMenuRef : undefined}
                             className="relative inline-flex"
                           >
                             <button
+                              ref={actionMenuOpenId === post.id ? activeMenuButtonRef : undefined}
                               type="button"
-                              onClick={() => handleToggleActionMenu(post.id)}
+                              onClick={(e) =>
+                                handleToggleActionMenu(post.id, e.currentTarget)
+                              }
                               className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:scale-95"
                               aria-expanded={actionMenuOpenId === post.id}
                               aria-haspopup="menu"
@@ -416,29 +460,39 @@ export default function AdminBlogSystem() {
                               Actions
                               <MoreVertical size={18} />
                             </button>
-                            {actionMenuOpenId === post.id ? (
-                              <div className="absolute right-0 top-full z-20 mt-2 w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-top-1 duration-150">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    handleEdit(post);
-                                    setActionMenuOpenId(null);
-                                  }}
-                                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-slate-700 transition hover:bg-slate-50 active:bg-slate-100"
-                                >
-                                  <Edit3 size={16} className="text-slate-400" />
-                                  Edit blog
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeletePrompt(post)}
-                                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-red-600 transition hover:bg-red-50 active:bg-red-100/50"
-                                >
-                                  <Trash2 size={16} className="text-red-500" />
-                                  Delete blog
-                                </button>
-                              </div>
-                            ) : null}
+                            {actionMenuOpenId === post.id && actionMenuPosition
+                              ? createPortal(
+                                  <div
+                                    ref={activeMenuRef}
+                                    className="fixed z-[200] w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-top-1 duration-150"
+                                    style={{
+                                      top: actionMenuPosition.top,
+                                      left: actionMenuPosition.left,
+                                    }}
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        handleEdit(post);
+                                        closeActionMenu();
+                                      }}
+                                      className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-slate-700 transition hover:bg-slate-50 active:bg-slate-100"
+                                    >
+                                      <Edit3 size={16} className="text-slate-400" />
+                                      Edit blog
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeletePrompt(post)}
+                                      className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-red-600 transition hover:bg-red-50 active:bg-red-100/50"
+                                    >
+                                      <Trash2 size={16} className="text-red-500" />
+                                      Delete blog
+                                    </button>
+                                  </div>,
+                                  document.body,
+                                )
+                              : null}
                           </div>
                         </td>
                       </tr>
