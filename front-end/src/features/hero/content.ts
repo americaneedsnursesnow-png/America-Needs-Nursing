@@ -16,8 +16,8 @@ export const heroContent = {
   subtitle:
     "Connecting Nurses, Healthcare Professionals, and Employers through jobs, media,recuirment, and community",
   stats: [
-    { label: "Find HelathCare Talent" },
-    {  label: "Explore Careeers" },
+    { label: "Find Healthcare Talent", href: "/companies", variant: "light" },
+    { label: "Explore Careers", href: "/jobs", variant: "primary" },
   ],
   searchCard: {
     titleBefore: "Grow Your Career With ",

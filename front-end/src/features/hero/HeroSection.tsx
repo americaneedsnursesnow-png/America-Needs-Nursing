@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { SiteContentWrapper } from "@/components/layout/SiteContentWrapper";
 import { heroContent } from "./content";
 import { HeroSearchCard } from "./HeroSearchCard";
@@ -41,13 +42,19 @@ export function HeroSection() {
                 {subtitle}
               </p>
 
-              <div className="mt-8 grid grid-cols-2 gap-x-8 gap-y-4 border-t border-white/20 pt-6 sm:max-w-2xl">
+              <div className="mt-8 flex flex-col gap-3 border-t border-white/20 pt-6 sm:max-w-2xl sm:flex-row">
                 {stats.map((item) => (
-                  <div key={item.label}>
-                    <p className="text-sm font-extrabold uppercase tracking-wide text-white sm:text-base">
-                      {item.label}
-                    </p>
-                  </div>
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={
+                      item.variant === "light"
+                        ? "inline-flex items-center justify-center rounded-lg bg-white px-5 py-3 text-sm font-extrabold uppercase tracking-wide text-red-600 shadow-sm transition-colors hover:bg-red-50 sm:text-base"
+                        : "inline-flex items-center justify-center rounded-lg bg-red-600 px-5 py-3 text-sm font-extrabold uppercase tracking-wide text-white shadow-sm transition-colors hover:bg-red-700 sm:text-base"
+                    }
+                  >
+                    {item.label}
+                  </Link>
                 ))}
               </div>
             </div>
