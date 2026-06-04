@@ -9,7 +9,7 @@ type MessageState = {
   type: 'error' | 'info' | 'warning';
 } | null;
 
-export default function SubscribeForm() {
+export default function SubscribeForm({ variant = "default" }: { variant?: "default" | "footer" }) {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<MessageState>(null);
@@ -59,6 +59,69 @@ export default function SubscribeForm() {
       default: return "border-red-200 bg-red-50 text-red-700";
     }
   };
+
+  if (variant === "footer") {
+    return (
+      <div className="relative z-10 w-full">
+        {/* Message Area - Space only appears when message exists */}
+        <div className={`transition-all duration-300 ${message ? "mb-4 opacity-100" : "mb-0 opacity-0 h-0 overflow-hidden"}`}>
+          {message && (
+            <div
+              className={`w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm animate-in fade-in slide-in-from-top-2 ${getMessageStyles()}`}
+              role="alert"
+            >
+              <div className="flex items-center gap-2">
+                {message.type === 'info' && <Info className="h-4 w-4 shrink-0" />}
+                {message.type === 'warning' && <Timer className="h-4 w-4 shrink-0" />}
+                {message.type === 'error' && <AlertCircle className="h-4 w-4 shrink-0" />}
+                <p className="font-medium">{message.text}</p>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setMessage(null)} 
+                className="hover:bg-black/5 rounded-full p-1 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        <form onSubmit={onSubmit} className="flex flex-col w-full gap-3">
+          <div className="relative w-full rounded-xl border border-gray-200 bg-white shadow-sm transition-all focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-500/20">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+              <Mail className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              id="footer-email"
+              type="email"
+              required
+              placeholder={subscribe.placeholder}
+              value={email}
+              onChange={(e) => {
+                  setEmail(e.target.value);
+                  if(message) setMessage(null);
+              }}
+              disabled={busy}
+              className="h-12 w-full border-0 bg-transparent pl-11 pr-4 text-sm text-slate-900 outline-none placeholder:text-gray-400 focus:ring-0 disabled:bg-gray-50 rounded-xl"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={busy}
+            className="flex h-12 w-full items-center justify-center rounded-xl bg-red-600 px-8 text-sm font-bold text-white transition-all hover:bg-red-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {busy ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              subscribe.button
+            )}
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="relative z-10 mx-auto w-full max-w-2xl">

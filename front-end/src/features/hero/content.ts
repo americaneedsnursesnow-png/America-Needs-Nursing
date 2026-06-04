@@ -11,13 +11,13 @@ export const heroContent = {
     width: 512,
     height: 303,
   },
-  eyebrow: "Get Hot & Trending Jobs",
+  eyebrow: "#1 Healthcare Career & Hiring Network in the USA",
   title: "America's HealthCare Career & Hiring Network",
   subtitle:
-    "Connecting Nurses, Healthcare Professionals, and Employers through jobs, media,recuirment, and community",
+    "Connecting Nurses, Healthcare Professionals, and Employers through jobs, media, recruitment, and community.",
   stats: [
-    { label: "Find Healthcare Talent", href: "/companies", variant: "light" },
-    { label: "Explore Careers", href: "/jobs", variant: "primary" },
+    { label: "Browse Jobs", href: "/jobs", variant: "primary" },
+    { label: "Explore Resources", href: "/blog", variant: "light" },
   ],
   searchCard: {
     titleBefore: "Grow Your Career With ",

@@ -1,6 +1,8 @@
 "use client";
 
 import { siteConfig } from "@/config/site";
+import { SiteContentWrapper } from "@/components/layout/SiteContentWrapper";
+import { ArrowUp } from "lucide-react";
 
 export function FooterBottom() {
   function scrollTop() {
@@ -8,39 +10,55 @@ export function FooterBottom() {
   }
 
   const year = new Date().getFullYear();
+  const brandName = siteConfig.copyrightBrand.toUpperCase();
 
   return (
-    <div className=" bg-footer  ">
-      <div className="flex w-full mt-10 flex-col gap-6 pt-5 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-center text-sm text-footer-muted sm:text-left">
-          © {year}{" "}
-          <a
-            href={siteConfig.copyrightBrandUrl}
-            className="font-semibold text-white underline decoration-white/40 underline-offset-2 transition hover:decoration-white"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="w-full bg-[#0b2559] py-5 text-white relative z-10">
+      <SiteContentWrapper>
+        {/* Desktop Layout */}
+        <div className="hidden lg:flex w-full items-center justify-between">
+          <p className="text-xs font-semibold tracking-wider text-white/95">
+            © {year} <a href={siteConfig.copyrightBrandUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">{brandName}</a>. ALL RIGHTS RESERVED.
+          </p>
+
+          <button
+            type="button"
+            onClick={scrollTop}
+            className="flex items-center gap-2 group transition focus:outline-none"
           >
-            {siteConfig.copyrightBrand}
-          </a>
-          . All rights reserved.
-        </p>
+            <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/60 transition group-hover:bg-white group-hover:text-[#0b2559]">
+              <ArrowUp className="h-3.5 w-3.5" />
+            </span>
+            <span className="text-xs font-semibold tracking-wider transition group-hover:text-white/80">
+              Back to top
+            </span>
+          </button>
+        </div>
 
-        <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-footer-muted sm:justify-end">
-          {siteConfig.stats.map((s) => (
-            <li key={s.label} className="whitespace-nowrap">
-              <span className="font-semibold text-white">{s.value}</span> {s.label}
-            </li>
-          ))}
-        </ul>
+        {/* Mobile / Tablet Layout */}
+        <div className="flex lg:hidden flex-col items-center gap-4 text-center">
+          <div className="text-xs font-bold tracking-widest text-white/95 leading-relaxed">
+            <div>© {year} {brandName}.</div>
+            <div className="mt-1">ALL RIGHTS RESERVED.</div>
+          </div>
+          
+          <div className="w-full max-w-[280px] h-[1px] bg-white/20" />
 
-        <button
-          type="button"
-          onClick={scrollTop}
-          className="mx-auto  shrink-0 rounded-md bg-button px-4 py-2 text-sm font-medium text-white transition hover:bg-button-dark focus:outline-none focus:ring-2 focus:ring-button sm:mx-0"
-        >
-          Back to top
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={scrollTop}
+            className="flex items-center gap-2 group transition focus:outline-none"
+          >
+            <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/60 transition group-hover:bg-white group-hover:text-[#0b2559]">
+              <ArrowUp className="h-3.5 w-3.5" />
+            </span>
+            <span className="text-xs font-bold tracking-widest transition group-hover:text-white/80">
+              Back to top
+            </span>
+          </button>
+        </div>
+      </SiteContentWrapper>
     </div>
   );
 }
+

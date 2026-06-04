@@ -10,6 +10,6 @@ export const mainNav: readonly MainNavItem[] = [
   { label: "Home", href: "/" },
   { label: "Find Health Care Talent", href: "/jobs" },
   { label: "Search jobs by state", href: "/jobs/locations" },
-  { label: "Healthcare listing", href: "/companies" },
+  { label: "Free Healthcare listing", href: "/companies" },
   { label: "Media", href: "/blog" },
 ];

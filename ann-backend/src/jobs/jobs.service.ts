@@ -395,20 +395,23 @@ export class JobsService {
         approved: CompanyApprovalStatus.APPROVED,
       })
       .andWhere('(job.expiresAt IS NULL OR job.expiresAt > :now)', { now })
-      .select([
-        'job.slug',
-        'job.title',
-        'job.stateCode',
-        'job.location',
-      ])
+      .select('job.slug', 'slug')
+      .addSelect('job.title', 'title')
+      .addSelect('job.stateCode', 'stateCode')
+      .addSelect('job.location', 'location')
       .orderBy('job.createdAt', 'DESC')
-      .take(lim)
-      .getMany();
-    return rows.map((j) => ({
-      slug: j.slug,
-      title: j.title,
-      stateCode: j.stateCode,
-      location: j.location,
+      .limit(lim)
+      .getRawMany<{
+        slug: string;
+        title: string;
+        stateCode: string | null;
+        location: string | null;
+      }>();
+    return rows.map((row) => ({
+      slug: row.slug,
+      title: row.title,
+      stateCode: row.stateCode,
+      location: row.location,
     }));
   }
 
