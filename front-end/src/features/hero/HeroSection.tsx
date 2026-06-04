@@ -84,7 +84,7 @@ export function HeroSection() {
       {/* ========================================================================= */}
       {/* DESKTOP VIEW (lg and up)                                                 */}
       {/* ========================================================================= */}
-      <div className="hidden lg:block relative w-full pb-14 min-h-[680px] xl:min-h-[720px]">
+      <div className="hidden lg:block relative w-full pb-0 min-h-[700px] xl:min-h-[760px]">
         {/* Background Image */}
         <div className="absolute inset-0 z-0 pointer-events-none">
           <Image
@@ -92,14 +92,14 @@ export function HeroSection() {
             alt={image.alt}
             fill
             priority
-            className="object-cover object-[72%_45%]"
+            className="object-cover object-[72%_5%]"
             sizes="100vw"
           />
         </div>
 
-          <SiteContentWrapper className="relative z-10 pt-16">
+          <SiteContentWrapper className="relative z-10 pt-0">
           {/* Main 3-Column Content Grid */}
-          <div className="grid grid-cols-[1.5fr_0.7fr_1fr] gap-8 items-start min-h-[520px] xl:min-h-[600px]">
+          <div className="grid grid-cols-[1.5fr_0.7fr_1fr] gap-8 items-start min-h-[560px] xl:min-h-[640px]">
             {/* Column 1: Text Content & Buttons */}
             <div className="pt-6">
               <p className="inline-flex items-center gap-2 rounded-full bg-[#f3f7ff] px-4 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#001a54] shadow-sm ring-1 ring-blue-100/80">

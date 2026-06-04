@@ -6,7 +6,10 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { MessageSquare, Users, CheckCircle2, ArrowRight } from "lucide-react";
 
-const SIGNUP_NURSE_IMAGE = "/signup-sc/nurse.avif";
+// Use the nurse image from the signup-sc folder as the background for this section.
+// Place alternative images under `public/signup-sc/` and update this path if needed.
+const SIGNUP_DESKTOP_IMAGE = "/signup-sc/nurse.png";
+const SIGNUP_MOBILE_IMAGE = "/signup-sc/nurse-mobile.png";
 
 const AmericaNeedNursingSection = () => {
   const sentence = "Find your purpose in America's healthcare community.";
@@ -26,7 +29,33 @@ const AmericaNeedNursingSection = () => {
   };
 
   return (
-    <section className="relative z-20 overflow-hidden border-t border-slate-100 bg-white py-12 md:py-20 ">
+    <section className="relative z-20 overflow-hidden border-t border-slate-100 bg-white py-8 md:py-20 min-h-[320px] md:min-h-[520px] mt-8 md:mt-12">
+      {/* Mobile-only right-side background */}
+      <div className="absolute right-0 top-24 md:hidden -z-10 w-5/6 h-full overflow-hidden">
+        <Image
+          src={SIGNUP_MOBILE_IMAGE}
+          alt="Find your purpose in America's healthcare community"
+          fill
+          className="object-contain object-right"
+          sizes="50vw"
+          priority
+        />
+      </div>
+
+      {/* Desktop-only right-side nurse background */}
+      <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 -z-10 w-1/2 h-[520px] lg:h-[560px] overflow-hidden rounded-[2rem]">
+        <Image
+          src={SIGNUP_DESKTOP_IMAGE}
+          alt="Find your purpose in America's healthcare community"
+          fill
+          className="object-cover object-right"
+          sizes="50vw"
+          priority
+        />
+      </div>
+
+      {/* Subtle overlay to keep text readable on small screens */}
+      <div className="absolute inset-0 -z-20 bg-white/80 md:bg-transparent" />
       <SiteContentWrapper>
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-2">
         
@@ -90,52 +119,7 @@ const AmericaNeedNursingSection = () => {
           </motion.div>
         </motion.div>
 
-        {/* RIGHT IMAGE SECTION - Improved & Height Controlled */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6 }}
-          className="relative flex justify-center lg:justify-end"
-        >
-          {/* Main Image Container with fixed max height */}
-          <div className="relative w-full max-w-[420px] h-[480px] group">
-            
-            {/* Decorative Background Element */}
-            <div className="absolute -bottom-4 -left-4 w-full h-full  rounded-[2.5rem] -z-10 transition-transform group-hover:-rotate-3 group-hover:scale-105 duration-500" />
-            
-            {/* Main Image Frame */}
-            <div className="relative h-full w-full overflow-hidden rounded-[2.5rem] border-4 border-white bg-slate-100 shadow-2xl">
-              <Image
-                src={SIGNUP_NURSE_IMAGE}
-                alt="Find your purpose in America's healthcare community"
-                fill
-                className="object-cover transition-transform duration-700 group-hover:scale-110"
-                sizes="(max-width: 1024px) 100vw, 420px"
-              />
-              
-              {/* Floating "Online Chat" Card */}
-              <motion.div 
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 4, repeat: Infinity }}
-                className="absolute top-6 -right-1 bg-white p-3 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-100"
-              >
-                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white ring-4 ring-green-50">
-                  <MessageSquare size={16} />
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase font-bold text-slate-400">Nurse Chat</p>
-                  <p className="text-xs font-bold text-slate-800">1.2k Online</p>
-                </div>
-              </motion.div>
-
-              {/* Verified Badge */}
-              <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 shadow-lg">
-                <CheckCircle2 className="text-red-600" size={16} />
-                <span className="text-xs font-bold text-slate-900">Verified Platform</span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        {/* RIGHT IMAGE SECTION removed per request */}
 
       </div>
       </SiteContentWrapper>
