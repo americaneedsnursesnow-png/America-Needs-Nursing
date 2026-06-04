@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Mail, ChevronDown, ChevronUp } from "lucide-react";
 import { siteConfig } from "@/config/site";
@@ -68,13 +67,7 @@ export function Footer() {
     <footer className="mt-auto w-full relative bg-white border-t border-gray-100 flex flex-col">
       {/* Background Image Container */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
-        <Image
-          src="/footer/footer.png"
-          alt=""
-          fill
-          className="object-cover object-top opacity-[0.95]"
-          priority
-        />
+        <div className="absolute inset-0 bg-[url('/footer/foother%20mobile.PNG')] bg-cover bg-top bg-no-repeat opacity-[0.95] lg:bg-[url('/footer/footer.png')]" />
       </div>
 
       {/* Main Footer Content */}
@@ -317,4 +310,3 @@ export function Footer() {
     </footer>
   );
 }
-
