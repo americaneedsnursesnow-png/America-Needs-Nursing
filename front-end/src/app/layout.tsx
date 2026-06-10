@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 
 import { ConditionalAppShell } from "@/components/layout";
 import { Providers } from "@/components/providers";
@@ -34,6 +35,20 @@ export default function RootLayout({
     
     <html lang="en" className={`${inter.variable} min-h-screen bg-white`}>
       <body className="min-h-screen bg-white font-sans text-slate-900 antialiased">
+        {/* Google tag (gtag.js) */}
+        <Script strategy="afterInteractive" src="https://www.googletagmanager.com/gtag/js?id=AW-18225694903" />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'AW-18225694903');
+            `,
+          }}
+        />
           <Providers>
           <ConditionalAppShell>{children}</ConditionalAppShell>
         </Providers>
