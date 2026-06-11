@@ -40,6 +40,7 @@ export const siteConfig = {
         { label: "Blog", href: "/blog" },
         { label: "About", href: "/about" },
         { label: "Privacy Policy", href: "/privacy-policy" },
+        { label: "Terms & Conditions", href: "/terms-and-conditions" },
       ],
     },
     jobCategories: {
