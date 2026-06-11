@@ -39,6 +39,7 @@ export const siteConfig = {
         { label: "Healthcare employers", href: "/companies" },
         { label: "Blog", href: "/blog" },
         { label: "About", href: "/about" },
+        { label: "Privacy Policy", href: "/privacy-policy" },
       ],
     },
     jobCategories: {
