@@ -13,7 +13,7 @@ import {
   toPublicUser,
   type PublicUserDto,
 } from '../common/mappers/public-user.mapper';
-import { NurseProfile, User, UserRole } from '../database/entities';
+import { NurseProfile, User, UserRole, Job, SavedJob, JobApplication, Company } from '../database/entities';
 import { deleteFileIfExists } from '../nurse-profiles/nurse-resume.storage';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
@@ -41,7 +41,50 @@ export class AccountService {
     private readonly usersRepository: Repository<User>,
     @InjectRepository(NurseProfile)
     private readonly nurseProfilesRepository: Repository<NurseProfile>,
+    @InjectRepository(Job)
+    private readonly jobsRepository: Repository<Job>,
+    @InjectRepository(SavedJob)
+    private readonly savedJobsRepository: Repository<SavedJob>,
+    @InjectRepository(JobApplication)
+    private readonly jobApplicationsRepository: Repository<JobApplication>,
+    @InjectRepository(Company)
+    private readonly companiesRepository: Repository<Company>,
   ) {}
+
+  async getUserDashboardStats(payload: JwtUserPayload) {
+    if (payload.role === UserRole.COMPANY) {
+      const company = await this.companiesRepository.findOne({
+        where: { employerUserId: payload.sub, clientName: payload.clientName },
+      });
+      if (!company) {
+        return { savedJobs: 0, jobViews: 0, totalJobs: 0 };
+      }
+      const totalJobs = await this.jobsRepository.count({
+        where: { companyId: company.id, clientName: payload.clientName },
+      });
+      
+      const savedJobs = await this.savedJobsRepository.createQueryBuilder('sj')
+        .innerJoin('sj.job', 'job')
+        .where('job.company_id = :companyId', { companyId: company.id })
+        .andWhere('sj.client_name = :clientName', { clientName: payload.clientName })
+        .getCount();
+
+      return { savedJobs, jobViews: 0, totalJobs };
+    }
+
+    if (payload.role === UserRole.NURSE) {
+      const savedJobs = await this.savedJobsRepository.count({
+        where: { nurseUserId: payload.sub, clientName: payload.clientName },
+      });
+      const totalJobs = await this.jobApplicationsRepository.count({
+        where: { nurseUserId: payload.sub, clientName: payload.clientName },
+      });
+
+      return { savedJobs, jobViews: 0, totalJobs };
+    }
+
+    return { savedJobs: 0, jobViews: 0, totalJobs: 0 };
+  }
 
   private async mapToPublic(user: User): Promise<PublicUserDto> {
     if (user.role !== UserRole.NURSE) {
