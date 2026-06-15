@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 // APIs and Context
 import { useAuth } from "@/contexts/auth-context";
 import { useRegistration } from "@/contexts/registration-context";
+import { type RegisterRole } from "@/lib/api/auth-api";
 import { patchAccountMe } from "@/lib/api/account-api";
 import {
   createCompany,
@@ -93,7 +94,7 @@ export default function RegisterDetailsPage() {
       // Safely extract values with fallbacks to avoid .trim() errors
       const emailVal = (tempData.email || "").toString().trim();
       const passwordVal = (tempData.password || "").toString();
-      const roleVal = (tempData.role || "nurse").toString();
+      const roleVal = ((tempData.role || "nurse") as RegisterRole);
       const fullNameVal = (fullName || "").trim();
 
       if (!emailVal) {
@@ -195,7 +196,7 @@ export default function RegisterDetailsPage() {
     try {
       const emailVal = (tempData.email || "").toString().trim();
       const passwordVal = (tempData.password || "").toString();
-      const roleVal = (tempData.role || "nurse").toString();
+      const roleVal = ((tempData.role || "nurse") as RegisterRole);
       const fullNameVal = (fullName || "").trim();
 
       if (!emailVal) {

@@ -16,10 +16,12 @@ import React, {
   useState,
 } from "react";
 
+import { type RegisterRole } from "@/lib/api/auth-api";
+
 interface TempRegData {
   email: string;
   password: string;
-  role: string;
+  role: RegisterRole;
 }
 
 interface RegistrationContextValue {

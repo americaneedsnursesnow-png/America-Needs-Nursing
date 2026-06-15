@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { AuthApiError } from "@/lib/api/auth-api";
+import { type RegisterRole } from "@/lib/api/auth-api";
 import { useAuth } from "@/contexts/auth-context";
 import { useRegistration } from "@/contexts/registration-context";
 
@@ -65,7 +66,7 @@ export default function SignUpPage() {
 
     setSubmitting(true);
     try {
-      const role = roleUi === "seeker" ? "nurse" : "company";
+      const role: RegisterRole = roleUi === "seeker" ? "nurse" : "company";
       // Store credentials in React context (in-memory only — never persisted to storage)
       setData({ email: email.trim(), password, role });
       router.push("/register-details");
