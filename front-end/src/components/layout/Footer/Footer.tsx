@@ -91,6 +91,12 @@ export function Footer() {
               <p className="text-xs font-medium leading-relaxed max-w-[240px] text-[#001a54]/80">
                 {address}
               </p>
+              <a
+                href={`mailto:${siteConfig.email}`}
+                className="text-xs font-semibold text-red-600 hover:underline break-all"
+              >
+                {siteConfig.email}
+              </a>
 
               {/* Social Icons Row */}
               <div className="flex items-center gap-3 mt-1">

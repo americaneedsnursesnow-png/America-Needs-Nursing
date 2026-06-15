@@ -52,7 +52,7 @@ export default function ContactUsPage() {
                           <span>1141 Hawthorne Circle,<br />Madison, GA, 30650, USA</span>
                         </p>
                         <p className="flex items-center gap-2">
-                           <a href="mailto:support@americaneedsnurses.com" className="hover:text-white transition-colors">support@americaneedsnurses.com</a>
+                           <a href="mailto:admin@americaneedsnurses.com" className="hover:text-white transition-colors">admin@americaneedsnurses.com</a>
                         </p>
                         <p className="flex items-center gap-2">
                            <a href="tel:+14047542651" className="hover:text-white transition-colors">+1 404-754-2651</a>

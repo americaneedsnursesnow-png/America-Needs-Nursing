@@ -19,6 +19,7 @@ export const siteConfig = {
   },
   address:
     "1141 Hawthorne Circle, Madison, GA, 30650, USA",
+  email: "admin@americaneedsnurses.com",
   /** Footer credit: linked brand name. */
   copyrightBrand: "Arrowhead",
   copyrightBrandUrl: "https://arrowheaddigitech.com",

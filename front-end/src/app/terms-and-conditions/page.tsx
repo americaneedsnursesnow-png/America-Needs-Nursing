@@ -158,7 +158,12 @@ export default function TermsAndConditionsPage() {
             <p>These Terms shall be governed and interpreted in accordance with applicable laws and regulations.</p>
 
             <h2 className="text-xl font-semibold text-slate-900 mt-8 mb-4">Contact Information</h2>
-            <p>America Needs Nurses<br/>Website: americaneedsnurses.com</p>
+            <p>
+              America Needs Nurses<br/>
+              1141 Hawthorne Circle, Madison, GA, 30650, USA<br/>
+              Email: <a href="mailto:admin@americaneedsnurses.com" className="text-red-600 hover:underline">admin@americaneedsnurses.com</a><br/>
+              Website: americaneedsnurses.com
+            </p>
           </div>
         </div>
       </SiteContentWrapper>
