@@ -32,15 +32,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    
     <html lang="en" className={`${inter.variable} min-h-screen bg-white`}>
       <body className="min-h-screen bg-white font-sans text-slate-900 antialiased">
-        {/* Google tag (gtag.js) */}
-        <Script strategy="afterInteractive" src="https://www.googletagmanager.com/gtag/js?id=AW-18225694903" />
-        <Script strategy="afterInteractive" src="https://www.googletagmanager.com/gtag/js?id=G-MKYR7F0ZZ2" />
-        <Script strategy="afterInteractive" src="https://www.googletagmanager.com/gtag/js?id=AW-18234303891" />
+        {/*
+          Google tags — gtag.js library is loaded ONCE, all three properties
+          are configured in the single inline script below.
+
+            AW-18225694903  →  Google Ads Manager
+            G-MKYR7F0ZZ2    →  Google Analytics / Search Console
+            AW-18234303891  →  Second Google Ads property
+
+          Loading the gtag.js <script> file multiple times (once per ID) is a
+          pattern Google's automated scanner flags as script injection / site
+          compromise. The correct approach is one <script src> + one inline
+          gtag('config') call per property — all three IDs are still tracked.
+        */}
         <Script
-          id="google-analytics"
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=AW-18225694903"
+        />
+        <Script
+          id="google-tags-init"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
@@ -53,10 +65,10 @@ export default function RootLayout({
             `,
           }}
         />
-          <Providers>
+
+        <Providers>
           <ConditionalAppShell>{children}</ConditionalAppShell>
         </Providers>
-        
       </body>
     </html>
   );

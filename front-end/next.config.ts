@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
       {
         source: "/favicon.ico",
         destination: "/favicon/favicon-ann.jpeg",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/dashboard/employee/notifications",
