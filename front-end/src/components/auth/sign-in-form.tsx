@@ -138,7 +138,7 @@ export function SignInForm({ onSuccess, compact, redirectTo }: SignInFormProps) 
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="e.g. name@company.com"
+          placeholder="Email address"
           className="form-input"
           disabled={!ready || submitting}
         />

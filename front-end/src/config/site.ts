@@ -18,7 +18,7 @@ export const siteConfig = {
     height: 300,
   },
   address:
-    "America Needs Nurses — nationwide nursing jobs & employer listings. United States.",
+    "1141 Hawthorne Circle, Madison, GA, 30650, USA",
   /** Footer credit: linked brand name. */
   copyrightBrand: "Arrowhead",
   copyrightBrandUrl: "https://arrowheaddigitech.com",
@@ -26,7 +26,7 @@ export const siteConfig = {
     title: "Subscribe to our newsletter",
     description:
       "Get hiring tips, featured roles, and nurse career resources in your inbox.",
-    placeholder: "Enter your email",
+    placeholder: "Email address",
     button: "Subscribe",
   },
   footerColumns: {

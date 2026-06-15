@@ -47,7 +47,10 @@ export default function ContactUsPage() {
                       </h3>
                       <div className="space-y-2 text-slate-300">
                         <p><strong>America Needs Nurses</strong></p>
-                        <p>United States</p>
+                        <p className="flex items-start gap-2">
+                          <svg className="w-4 h-4 mt-0.5 shrink-0 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                          <span>1141 Hawthorne Circle,<br />Madison, GA, 30650, USA</span>
+                        </p>
                         <p className="flex items-center gap-2">
                            <a href="mailto:support@americaneedsnurses.com" className="hover:text-white transition-colors">support@americaneedsnurses.com</a>
                         </p>
@@ -89,22 +92,22 @@ export default function ContactUsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
                       <label htmlFor="firstName" className="ml-1 block text-sm font-semibold text-gray-700">First Name</label>
-                      <input type="text" id="firstName" placeholder="John" className="form-input" />
+                      <input type="text" id="firstName" placeholder="First name" className="form-input" />
                     </div>
                     <div className="space-y-1.5">
                       <label htmlFor="lastName" className="ml-1 block text-sm font-semibold text-gray-700">Last Name</label>
-                      <input type="text" id="lastName" placeholder="Doe" className="form-input" />
+                      <input type="text" id="lastName" placeholder="Last name" className="form-input" />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
                       <label htmlFor="email" className="ml-1 block text-sm font-semibold text-gray-700">Email Address</label>
-                      <input type="email" id="email" placeholder="john@example.com" className="form-input" />
+                      <input type="email" id="email" placeholder="Email address" className="form-input" />
                     </div>
                     <div className="space-y-1.5">
                       <label htmlFor="phone" className="ml-1 block text-sm font-semibold text-gray-700">Phone Number</label>
-                      <input type="tel" id="phone" placeholder="+1 (555) 000-0000" className="form-input" />
+                      <input type="tel" id="phone" placeholder="Phone number" className="form-input" />
                     </div>
                   </div>
 
@@ -122,7 +125,7 @@ export default function ContactUsPage() {
 
                   <div className="space-y-1.5">
                     <label htmlFor="message" className="ml-1 block text-sm font-semibold text-gray-700">Message</label>
-                    <textarea id="message" rows={4} placeholder="How can we help you?" className="form-input resize-y"></textarea>
+                    <textarea id="message" rows={4} placeholder="Your message" className="form-input resize-y"></textarea>
                   </div>
 
                   <button

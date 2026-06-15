@@ -116,7 +116,7 @@ function ResetPasswordForm() {
           autoComplete="new-password"
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
-          placeholder="Repeat password"
+          placeholder="Confirm new password"
           className="w-full rounded-xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-black transition-all focus:outline-none focus:ring-2 focus:ring-[var(--color-button)]"
           disabled={!ready || submitting}
         />
