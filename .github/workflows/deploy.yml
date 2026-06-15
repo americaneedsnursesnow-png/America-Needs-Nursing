@@ -26,6 +26,8 @@ jobs:
 
       - name: Frontend — install, build, verify artifacts
         working-directory: front-end
+        env:
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
         run: npm ci && npm run build && npm run verify:build
 
       - name: Frontend — Docker image (standalone + .next/static copy)
