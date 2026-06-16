@@ -5,7 +5,7 @@ import { CompaniesModule } from '../companies/companies.module';
 import { JobPackagesModule } from '../job-packages/job-packages.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PaymentsModule } from '../payments/payments.module';
-import { Company, Job, NurseProfile, User } from '../database/entities';
+import { Company, Job, NurseProfile, User, SavedJob, JobApplication } from '../database/entities';
 import { AccountController } from './account.controller';
 import { AccountService } from './account.service';
 import { AdminDashboardStatsService } from './admin-dashboard-stats.service';
@@ -13,7 +13,7 @@ import { EmployerBootstrapService } from './employer-bootstrap.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, NurseProfile, Job, Company]),
+    TypeOrmModule.forFeature([User, NurseProfile, Job, Company, SavedJob, JobApplication]),
     AuthModule,
     CompaniesModule,
     JobPackagesModule,

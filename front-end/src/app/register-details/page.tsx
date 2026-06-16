@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 
 // APIs and Context
 import { useAuth } from "@/contexts/auth-context";
+import { useRegistration } from "@/contexts/registration-context";
+import { type RegisterRole } from "@/lib/api/auth-api";
 import { patchAccountMe } from "@/lib/api/account-api";
 import {
   createCompany,
@@ -27,9 +29,10 @@ function ErrorIcon() {
 export default function RegisterDetailsPage() {
   const router = useRouter();
   const { register, updateUser } = useAuth();
+  // Credentials live in React context only — never persisted to any browser storage
+  const { data: tempData, clear: clearRegData } = useRegistration();
 
   // --- Logic States ---
-  const [tempData, setTempData] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // --- Inline Error States ---
@@ -59,18 +62,13 @@ export default function RegisterDetailsPage() {
     [companyHeroFile],
   );
 
+  // If no in-memory registration data exists, the user landed here directly
+  // (e.g. typed the URL or hard-refreshed the page). Send them back to start.
   useEffect(() => {
-    try {
-      const rawData = sessionStorage.getItem("temp_reg_data");
-      if (!rawData) {
-        router.push("/sign-up");
-        return;
-      }
-      setTempData(JSON.parse(rawData));
-    } catch (err) {
-      router.push("/sign-up");
+    if (!tempData) {
+      router.push("/register");
     }
-  }, [router]);
+  }, [tempData, router]);
 
   useEffect(() => {
     return () => {
@@ -80,111 +78,111 @@ export default function RegisterDetailsPage() {
   }, [companyLogoPreview, companyHeroPreview]);
 
   async function handleSubmit(e: React.FormEvent) {
-  e.preventDefault();
-  setError(null);
+    e.preventDefault();
+    setError(null);
 
-  // 1. Validate Session Data before starting
-  if (!tempData) {
-    setError("Session data missing. Please restart registration.");
-    setShakeTrigger((p) => p + 1);
-    return;
-  }
-
-  setSubmitting(true);
-
-  try {
-    // Safely extract values with fallbacks to avoid .trim() errors
-    const emailVal = (tempData.email || "").toString().trim();
-    const passwordVal = (tempData.password || "").toString();
-    const roleVal = (tempData.role || "nurse").toString();
-    const fullNameVal = (fullName || "").trim();
-
-    if (!emailVal) {
-      throw new Error("Email is missing from registration data.");
-    }
-
-    // 2. CALL REGISTER
-    let authResponse;
-    try {
-      authResponse = await register({
-        email: emailVal,
-        password: passwordVal,
-        role: roleVal,
-      });
-    } catch (err: any) {
-      // Check for 409 status in the error object (Standard for Axios/Fetch wrappers)
-      const status = err.status || err.response?.status;
-      
-      if (status === 409 || err.message?.includes("409")) {
-        setError("An account with this email already exists. Please sign in instead.");
-      } else {
-        setError(err.message || "Registration failed. Please try again.");
-      }
+    // 1. Validate in-memory registration data before starting
+    if (!tempData) {
+      setError("Session data missing. Please restart registration.");
       setShakeTrigger((p) => p + 1);
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      // Safely extract values with fallbacks to avoid .trim() errors
+      const emailVal = (tempData.email || "").toString().trim();
+      const passwordVal = (tempData.password || "").toString();
+      const roleVal = ((tempData.role || "nurse") as RegisterRole);
+      const fullNameVal = (fullName || "").trim();
+
+      if (!emailVal) {
+        throw new Error("Email is missing from registration data.");
+      }
+
+      // 2. CALL REGISTER
+      let authResponse;
+      try {
+        authResponse = await register({
+          email: emailVal,
+          password: passwordVal,
+          role: roleVal,
+        });
+      } catch (err: any) {
+        // Check for 409 status in the error object (Standard for Axios/Fetch wrappers)
+        const status = err.status || err.response?.status;
+
+        if (status === 409 || err.message?.includes("409")) {
+          setError("An account with this email already exists. Please sign in instead.");
+        } else {
+          setError(err.message || "Registration failed. Please try again.");
+        }
+        setShakeTrigger((p) => p + 1);
+        setSubmitting(false);
+        return; // IMPORTANT: Stop execution here so we don't try to use a non-existent token
+      }
+
+      const token = authResponse?.accessToken;
+      if (!token) {
+        throw new Error("Registration succeeded but no session token was received.");
+      }
+
+      // 3. ROLE SPECIFIC LOGIC
+      if (roleVal === "nurse") {
+        await patchAccountMe(token, { fullName: fullNameVal });
+        updateUser({ fullName: fullNameVal });
+
+        await patchMyNurseProfile(token, {
+          specialization: (spec || "").trim(),
+          licenseNumber: (license || "").trim(),
+          yearsExperience: parseInt(years || "0", 10),
+        });
+
+        clearRegData(); // Clear credentials from memory
+        router.push("/");
+      } else {
+        if (!(companyName || "").trim()) {
+          throw new Error("Company name is required.");
+        }
+        if (!(companyEmail || "").trim()) {
+          throw new Error("Business email is required.");
+        }
+        if (!(companyPhone || "").trim()) {
+          throw new Error("Business phone number is required.");
+        }
+
+        await createCompany(token, {
+          name: (companyName || "").trim(),
+          slug: (slug || "").trim().toLowerCase().replace(/\s+/g, "-"),
+          contactEmail: (companyEmail || "").trim() || undefined,
+          contactPhone: (companyPhone || "").trim() || undefined,
+          description: isRichTextEffectivelyEmpty(companyDescription)
+            ? undefined
+            : sanitizeJobRichHtml(companyDescription),
+          cultureText: isRichTextEffectivelyEmpty(companyCulture)
+            ? undefined
+            : sanitizeJobRichHtml(companyCulture),
+        });
+
+        if (companyLogoFile) {
+          await uploadCompanyLogo(token, companyLogoFile);
+        }
+        if (companyHeroFile) {
+          await uploadCompanyHero(token, companyHeroFile);
+        }
+
+        clearRegData(); // Clear credentials from memory
+        router.push("/dashboard");
+      }
+    } catch (err: any) {
+      console.error("Setup Error:", err);
+      setError(err.message || "An unexpected error occurred during setup.");
+      setShakeTrigger((p) => p + 1);
+    } finally {
       setSubmitting(false);
-      return; // IMPORTANT: Stop execution here so we don't try to use a non-existent token
     }
-
-    const token = authResponse?.accessToken;
-    if (!token) {
-      throw new Error("Registration succeeded but no session token was received.");
-    }
-
-    // 3. ROLE SPECIFIC LOGIC
-    if (roleVal === "nurse") {
-      await patchAccountMe(token, { fullName: fullNameVal });
-      updateUser({ fullName: fullNameVal });
-
-      await patchMyNurseProfile(token, {
-        specialization: (spec || "").trim(),
-        licenseNumber: (license || "").trim(),
-        yearsExperience: parseInt(years || "0", 10),
-      });
-
-      sessionStorage.removeItem("temp_reg_data");
-      router.push("/");
-    } else {
-      if (!(companyName || "").trim()) {
-        throw new Error("Company name is required.");
-      }
-      if (!(companyEmail || "").trim()) {
-        throw new Error("Business email is required.");
-      }
-      if (!(companyPhone || "").trim()) {
-        throw new Error("Business phone number is required.");
-      }
-
-      await createCompany(token, {
-        name: (companyName || "").trim(),
-        slug: (slug || "").trim().toLowerCase().replace(/\s+/g, "-"),
-        contactEmail: (companyEmail || "").trim() || undefined,
-        contactPhone: (companyPhone || "").trim() || undefined,
-        description: isRichTextEffectivelyEmpty(companyDescription)
-          ? undefined
-          : sanitizeJobRichHtml(companyDescription),
-        cultureText: isRichTextEffectivelyEmpty(companyCulture)
-          ? undefined
-          : sanitizeJobRichHtml(companyCulture),
-      });
-
-      if (companyLogoFile) {
-        await uploadCompanyLogo(token, companyLogoFile);
-      }
-      if (companyHeroFile) {
-        await uploadCompanyHero(token, companyHeroFile);
-      }
-
-      sessionStorage.removeItem("temp_reg_data");
-      router.push("/dashboard");
-    }
-  } catch (err: any) {
-    console.error("Setup Error:", err);
-    setError(err.message || "An unexpected error occurred during setup.");
-    setShakeTrigger((p) => p + 1);
-  } finally {
-    setSubmitting(false);
   }
-}
 
   async function handleFinishLater() {
     setError(null);
@@ -198,7 +196,7 @@ export default function RegisterDetailsPage() {
     try {
       const emailVal = (tempData.email || "").toString().trim();
       const passwordVal = (tempData.password || "").toString();
-      const roleVal = (tempData.role || "nurse").toString();
+      const roleVal = ((tempData.role || "nurse") as RegisterRole);
       const fullNameVal = (fullName || "").trim();
 
       if (!emailVal) {
@@ -221,7 +219,7 @@ export default function RegisterDetailsPage() {
         updateUser({ fullName: fullNameVal });
       }
 
-      sessionStorage.removeItem("temp_reg_data");
+      clearRegData(); // Clear credentials from memory
       router.push("/dashboard");
     } catch (err: any) {
       const status = err.status || err.response?.status;
@@ -235,6 +233,7 @@ export default function RegisterDetailsPage() {
       setSubmitting(false);
     }
   }
+
   const role = tempData?.role || "nurse";
   const isNurse = role === "nurse";
 
@@ -307,7 +306,6 @@ export default function RegisterDetailsPage() {
                   <input required type="number" value={years} onChange={(e) => setYears(e.target.value)} className="form-input" disabled={submitting} />
                 </div>
               </div>
-               
             </>
           ) : (
             <>

@@ -63,6 +63,12 @@ function BrandBlock() {
       <p className="max-w-xs text-sm leading-relaxed text-footer-muted">
         {siteConfig.address}
       </p>
+      <a
+        href={`mailto:${siteConfig.email}`}
+        className="text-sm font-semibold text-red-500 hover:underline break-all"
+      >
+        {siteConfig.email}
+      </a>
 
       {/* Social Icons Row */}
           <div className="flex items-center gap-3 mt-2">

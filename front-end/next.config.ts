@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 /** Nest ann-backend (HTTP + Socket.IO). Used by /api/nest rewrites. */
 const API_UPSTREAM =
@@ -6,6 +7,8 @@ const API_UPSTREAM =
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Silence the "multiple lockfiles" workspace root warning in monorepos
+  outputFileTracingRoot: path.join(__dirname, "../"),
   reactStrictMode: true,
   eslint: {
     ignoreDuringBuilds: true,
@@ -15,7 +18,7 @@ const nextConfig: NextConfig = {
       {
         source: "/favicon.ico",
         destination: "/favicon/favicon-ann.jpeg",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/dashboard/employee/notifications",

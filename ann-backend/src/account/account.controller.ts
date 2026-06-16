@@ -45,6 +45,11 @@ export class AccountController {
     return this.accountService.getMe(user);
   }
 
+  @Get('me/dashboard-stats')
+  getDashboardStats(@CurrentUser() user: JwtUserPayload) {
+    return this.accountService.getUserDashboardStats(user);
+  }
+
   /** One round-trip for employer dashboard: account, company, job packages catalog, unread notifications. */
   @Get('employer/bootstrap')
   getEmployerBootstrap(@CurrentUser() user: JwtUserPayload) {

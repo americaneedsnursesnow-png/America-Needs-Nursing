@@ -57,10 +57,24 @@ export type AdminDashboardStats = {
   revenue: AdminDashboardRevenue;
 };
 
+export type UserDashboardStats = {
+  savedJobs: number;
+  jobViews: number;
+  totalJobs: number;
+};
+
 export async function getAdminDashboardStats(
   accessToken: string,
 ): Promise<AdminDashboardStats> {
   return authedJson<AdminDashboardStats>("/account/admin/dashboard-stats", accessToken, {
+    method: "GET",
+  });
+}
+
+export async function getUserDashboardStats(
+  accessToken: string,
+): Promise<UserDashboardStats> {
+  return authedJson<UserDashboardStats>("/account/me/dashboard-stats", accessToken, {
     method: "GET",
   });
 }

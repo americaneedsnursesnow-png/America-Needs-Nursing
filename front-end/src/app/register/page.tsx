@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { AuthApiError } from "@/lib/api/auth-api";
+import { type RegisterRole } from "@/lib/api/auth-api";
 import { useAuth } from "@/contexts/auth-context";
+import { useRegistration } from "@/contexts/registration-context";
 
 // --- Modern Error Icon (Matches Sign-in) ---
 function ErrorIcon() {
@@ -27,6 +29,7 @@ const MIN_PASSWORD = 8;
 
 export default function SignUpPage() {
   const { ready } = useAuth();
+  const { setData } = useRegistration();
   const router = useRouter();
   const [roleUi, setRoleUi] = useState<"seeker" | "poster">("seeker");
   const [email, setEmail] = useState("");
@@ -63,9 +66,9 @@ export default function SignUpPage() {
 
     setSubmitting(true);
     try {
-      const role = roleUi === "seeker" ? "nurse" : "company";
-      const tempUserData = { email: email.trim(), password, role };
-      sessionStorage.setItem("temp_reg_data", JSON.stringify(tempUserData));
+      const role: RegisterRole = roleUi === "seeker" ? "nurse" : "company";
+      // Store credentials in React context (in-memory only — never persisted to storage)
+      setData({ email: email.trim(), password, role });
       router.push("/register-details");
     } catch (err: any) {
       const status = err.status || err.statusCode || err.response?.status;
@@ -129,7 +132,7 @@ export default function SignUpPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder="Email address"
                 className="form-input"
                 disabled={!ready || submitting}
               />

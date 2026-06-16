@@ -99,9 +99,9 @@ export function HeroSection() {
 
           <SiteContentWrapper className="relative z-10 pt-0">
           {/* Main 3-Column Content Grid */}
-          <div className="grid grid-cols-[1.5fr_0.7fr_1fr] gap-8 items-start min-h-[560px] xl:min-h-[640px]">
+          <div className="grid grid-cols-[1.5fr_0.7fr_1fr] gap-8 items-center min-h-[560px] xl:min-h-[640px]">
             {/* Column 1: Text Content & Buttons */}
-            <div className="pt-6">
+            <div>
               <p className="inline-flex items-center gap-2 rounded-full bg-[#f3f7ff] px-4 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#001a54] shadow-sm ring-1 ring-blue-100/80">
                 <Star className="h-3.5 w-3.5 fill-red-600 text-red-600" />
                 {eyebrow}
@@ -147,7 +147,7 @@ export function HeroSection() {
             <div className="relative min-h-[280px]" />
 
             {/* Column 3: Search Card */}
-            <div className="pt-2">
+            <div>
               <HeroSearchCard />
             </div>
           </div>
@@ -226,7 +226,7 @@ export function HeroSection() {
           />
 
           {/* Text and buttons overlay */}
-          <div className="absolute inset-0 flex flex-col justify-between pt-8 pb-14 px-4">
+          <div className="absolute inset-0 flex flex-col justify-center px-4">
             <div className="relative z-10 text-left">
             <p className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-[9px] font-extrabold uppercase tracking-wider text-[#001a54] shadow-sm border border-blue-100">
               <Star className="h-3 w-3 fill-red-600 text-red-600" />

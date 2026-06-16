@@ -24,6 +24,8 @@ import { useAuth } from "@/contexts/auth-context";
 import {
   getAdminDashboardStats,
   type AdminDashboardStats,
+  getUserDashboardStats,
+  type UserDashboardStats,
 } from "@/lib/api/account-api";
 import { canAccessAdminShell, isFullOpsAdmin } from "@/lib/api/auth-api";
 
@@ -31,28 +33,48 @@ export function DashboardPageContent() {
   const { accessToken, ready, user } = useAuth();
   const [adminStats, setAdminStats] = useState<AdminDashboardStats | null>(null);
   const [adminStatsLoading, setAdminStatsLoading] = useState(false);
+  const [userStats, setUserStats] = useState<UserDashboardStats | null>(null);
+  const [userStatsLoading, setUserStatsLoading] = useState(false);
 
   const showAdminStats = Boolean(user && canAccessAdminShell(user.role));
   const showOpsAdminDashboard = Boolean(user && isFullOpsAdmin(user.role));
 
   useEffect(() => {
-    if (!ready || !accessToken || !user || !canAccessAdminShell(user.role)) {
+    if (!ready || !accessToken || !user) {
       setAdminStats(null);
       setAdminStatsLoading(false);
+      setUserStats(null);
+      setUserStatsLoading(false);
       return;
     }
     let cancelled = false;
-    setAdminStatsLoading(true);
-    getAdminDashboardStats(accessToken)
-      .then((data) => {
-        if (!cancelled) setAdminStats(data);
-      })
-      .catch(() => {
-        if (!cancelled) setAdminStats(null);
-      })
-      .finally(() => {
-        if (!cancelled) setAdminStatsLoading(false);
-      });
+    
+    if (canAccessAdminShell(user.role)) {
+      setAdminStatsLoading(true);
+      getAdminDashboardStats(accessToken)
+        .then((data) => {
+          if (!cancelled) setAdminStats(data);
+        })
+        .catch(() => {
+          if (!cancelled) setAdminStats(null);
+        })
+        .finally(() => {
+          if (!cancelled) setAdminStatsLoading(false);
+        });
+    } else {
+      setUserStatsLoading(true);
+      getUserDashboardStats(accessToken)
+        .then((data) => {
+          if (!cancelled) setUserStats(data);
+        })
+        .catch(() => {
+          if (!cancelled) setUserStats(null);
+        })
+        .finally(() => {
+          if (!cancelled) setUserStatsLoading(false);
+        });
+    }
+
     return () => {
       cancelled = true;
     };
@@ -116,9 +138,9 @@ export function DashboardPageContent() {
       ) : (
         <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 lg:gap-6">
           {[
-            { label: "Saved jobs", count: "45", icon: Heart, color: "bg-red-50 text-red-600" },
-            { label: "Job views", count: "1,240", icon: Eye, color: "bg-amber-50 text-amber-700" },
-            { label: "Total jobs", count: "18", icon: Layers, color: "bg-emerald-50 text-emerald-700" },
+            { label: "Saved jobs", count: userStats?.savedJobs.toLocaleString() ?? "0", icon: Heart, color: "bg-red-50 text-red-600" },
+            { label: "Job views", count: userStats?.jobViews.toLocaleString() ?? "0", icon: Eye, color: "bg-amber-50 text-amber-700" },
+            { label: "Total jobs", count: userStats?.totalJobs.toLocaleString() ?? "0", icon: Layers, color: "bg-emerald-50 text-emerald-700" },
           ].map((stat, i) => (
             <div
               key={i}
@@ -131,7 +153,11 @@ export function DashboardPageContent() {
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                   {stat.label}
                 </p>
-                <h3 className="text-2xl font-bold tracking-tight text-slate-900">{stat.count}</h3>
+                {userStatsLoading ? (
+                  <Loader2 className="h-7 w-7 animate-spin text-red-600" aria-hidden />
+                ) : (
+                  <h3 className="text-2xl font-bold tracking-tight text-slate-900">{stat.count}</h3>
+                )}
               </div>
             </div>
           ))}
