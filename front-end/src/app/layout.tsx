@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   description:
     "America Needs Nurses connects registered nurses, LPNs, CNAs, and nurse practitioners with top healthcare employers across the United States. Browse nursing jobs, build your profile, and advance your healthcare career.",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "https://americaneedsnursing.com",
+    process.env.NEXT_PUBLIC_APP_URL || "https://americaneedsnurses.com",
   ),
   icons: {
     icon: [{ url: "/favicon/favicon-ann.jpeg", type: "image/jpeg" }],
